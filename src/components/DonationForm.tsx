@@ -90,8 +90,9 @@ const DonationForm = () => {
     try {
       const amountValue = formData.amount.replace(/\./g, "").replace(",", ".");
       
+      // Usar URL completa do projeto Lovable Cloud
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-payment`,
+        'https://ytbamwypejyzhqkgokbc.supabase.co/functions/v1/create-pix-payment',
         {
           method: 'POST',
           headers: {
