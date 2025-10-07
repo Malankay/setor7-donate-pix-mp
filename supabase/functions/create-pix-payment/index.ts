@@ -12,9 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const { name, email, amount, description } = await req.json();
+    const { name, email, phone, steamId, amount, description } = await req.json();
 
-    console.log('Creating PIX payment:', { name, email, amount });
+    console.log('Creating PIX payment:', { name, email, phone, steamId, amount });
 
     const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
     
@@ -31,6 +31,22 @@ serve(async (req) => {
         email: email,
         first_name: name.split(' ')[0],
         last_name: name.split(' ').slice(1).join(' ') || name.split(' ')[0],
+        identification: {
+          type: 'other',
+          number: steamId || '',
+        },
+      },
+      additional_info: {
+        payer: {
+          phone: {
+            area_code: phone ? phone.replace(/\D/g, '').substring(0, 2) : '',
+            number: phone ? phone.replace(/\D/g, '').substring(2) : '',
+          },
+        },
+      },
+      metadata: {
+        steam_id: steamId || '',
+        phone: phone || '',
       },
     };
 

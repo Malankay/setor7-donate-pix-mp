@@ -95,6 +95,8 @@ const DonationForm = () => {
         body: {
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
+          steamId: formData.steamId,
           amount: amountValue,
           description: `Doação Setor 7 - ${formData.name} (${formData.steamId})`,
         },
