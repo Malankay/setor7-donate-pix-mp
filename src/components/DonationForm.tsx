@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { QrCode, Skull } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const DonationForm = () => {
   const [formData, setFormData] = useState({
@@ -90,25 +91,17 @@ const DonationForm = () => {
     try {
       const amountValue = formData.amount.replace(/\./g, "").replace(",", ".");
 
-      const functionUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/create-pix-payment`;
-
-      const response = await fetch(functionUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('create-pix-payment', {
+        body: {
           name: formData.name,
           email: formData.email,
           amount: amountValue,
           description: `Doação Setor 7 - ${formData.name} (${formData.steamId})`,
-        }),
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erro ao gerar pagamento PIX');
+      if (error) {
+        throw new Error(error.message || 'Erro ao gerar pagamento PIX');
       }
 
       setPixData(data);
