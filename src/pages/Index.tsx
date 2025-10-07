@@ -1,10 +1,8 @@
 import DonationForm from "@/components/DonationForm";
 import logoSetor7 from "@/assets/logoSetor7.jpg";
 import { Headphones, Users, Zap } from "lucide-react";
-
 const Index = () => {
-  return (
-    <div className="min-h-screen bg-darker-bg">
+  return <div className="min-h-screen bg-darker-bg">
       {/* Animated background */}
       <div className="fixed inset-0 bg-gradient-hero opacity-50 pointer-events-none" />
       <div className="fixed inset-0 bg-gradient-glow opacity-20 pointer-events-none animate-pulse" />
@@ -14,11 +12,7 @@ const Index = () => {
         <header className="py-8 px-4 text-center border-b border-border/50 backdrop-blur-sm">
           <div className="container mx-auto max-w-6xl">
             <div className="flex items-center justify-center gap-4 mb-4">
-              <img 
-                src={logoSetor7} 
-                alt="Setor 7 Logo" 
-                className="w-20 h-20 rounded-full logo-glow animate-pulse"
-              />
+              <img src={logoSetor7} alt="Setor 7 Logo" className="w-20 h-20 rounded-full logo-glow animate-pulse" />
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-2 tracking-tight">
               SETOR 7
@@ -52,9 +46,7 @@ const Index = () => {
               <div className="feature-card p-6 rounded-lg text-center">
                 <Users className="w-12 h-12 mx-auto mb-4 text-accent" />
                 <h3 className="text-lg font-bold mb-2">Time Dedicado</h3>
-                <p className="text-sm text-muted-foreground">
-                  Administração presente e justa
-                </p>
+                <p className="text-sm text-muted-foreground">Administração imparcial e justa</p>
               </div>
             </div>
           </div>
@@ -79,8 +71,6 @@ const Index = () => {
           </div>
         </footer>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
