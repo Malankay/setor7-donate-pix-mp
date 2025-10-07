@@ -1,0 +1,93 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { name, email, amount, description } = await req.json();
+
+    console.log('Creating PIX payment:', { name, email, amount });
+
+    const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
+    
+    if (!accessToken) {
+      throw new Error('Mercado Pago Access Token não configurado');
+    }
+
+    // Criar pagamento PIX no Mercado Pago
+    const paymentData = {
+      transaction_amount: parseFloat(amount),
+      description: description || 'Doação Setor 7 Hardcore PVE',
+      payment_method_id: 'pix',
+      payer: {
+        email: email,
+        first_name: name.split(' ')[0],
+        last_name: name.split(' ').slice(1).join(' ') || name.split(' ')[0],
+      },
+    };
+
+    console.log('Sending payment request to Mercado Pago');
+
+    const response = await fetch('https://api.mercadopago.com/v1/payments', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(paymentData),
+    });
+
+    const data = await response.json();
+
+    console.log('Mercado Pago response status:', response.status);
+
+    if (!response.ok) {
+      console.error('Mercado Pago error:', data);
+      throw new Error(data.message || 'Erro ao criar pagamento PIX');
+    }
+
+    // Retornar dados do QR Code
+    const pixData = {
+      qr_code: data.point_of_interaction?.transaction_data?.qr_code || '',
+      qr_code_base64: data.point_of_interaction?.transaction_data?.qr_code_base64 || '',
+      ticket_url: data.point_of_interaction?.transaction_data?.ticket_url || '',
+      payment_id: data.id,
+      status: data.status,
+    };
+
+    console.log('PIX payment created successfully:', pixData.payment_id);
+
+    return new Response(
+      JSON.stringify(pixData),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    );
+
+  } catch (error) {
+    console.error('Error in create-pix-payment:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Erro interno ao processar pagamento';
+    const errorDetails = error instanceof Error ? error.toString() : String(error);
+    
+    return new Response(
+      JSON.stringify({ 
+        error: errorMessage,
+        details: errorDetails,
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    );
+  }
+});

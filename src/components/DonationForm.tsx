@@ -15,6 +15,12 @@ const DonationForm = () => {
     amount: "",
   });
   const [showQrCode, setShowQrCode] = useState(false);
+  const [pixData, setPixData] = useState<{
+    qr_code: string;
+    qr_code_base64: string;
+    payment_id: string;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const formatCurrency = (value: string) => {
     // Remove tudo exceto números
@@ -74,20 +80,54 @@ const DonationForm = () => {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (validateForm()) {
-      // Simulate PIX generation
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+
+    try {
+      const amountValue = formData.amount.replace(/\./g, "").replace(",", ".");
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-pix-payment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            amount: amountValue,
+            description: `Doação Setor 7 - ${formData.name} (${formData.steamId})`,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao gerar pagamento PIX');
+      }
+
+      setPixData(data);
       setShowQrCode(true);
       toast.success("QR Code PIX gerado! Escaneie para doar.");
+    } catch (error) {
+      console.error('Erro ao criar pagamento:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao gerar QR Code PIX');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCopyPixCode = () => {
-    const pixCode = "00020126580014BR.GOV.BCB.PIX0136setor7hardcore@example.com"; // Mock PIX code
-    navigator.clipboard.writeText(pixCode);
-    toast.success("Código PIX copiado!");
+    if (pixData?.qr_code) {
+      navigator.clipboard.writeText(pixData.qr_code);
+      toast.success("Código PIX copiado!");
+    }
   };
 
   if (showQrCode) {
@@ -102,9 +142,17 @@ const DonationForm = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex justify-center">
-            <div className="bg-white p-6 rounded-lg">
-              <QrCode className="w-48 h-48 text-black" strokeWidth={1} />
-            </div>
+            {pixData?.qr_code_base64 ? (
+              <img 
+                src={`data:image/png;base64,${pixData.qr_code_base64}`}
+                alt="QR Code PIX"
+                className="w-64 h-64 rounded-lg"
+              />
+            ) : (
+              <div className="bg-white p-6 rounded-lg">
+                <QrCode className="w-48 h-48 text-black" strokeWidth={1} />
+              </div>
+            )}
           </div>
           <div className="space-y-4">
             <div className="text-center">
@@ -214,8 +262,8 @@ const DonationForm = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full donate-button">
-            Doar via PIX
+          <Button type="submit" className="w-full donate-button" disabled={isLoading}>
+            {isLoading ? "Gerando QR Code..." : "Doar via PIX"}
           </Button>
         </form>
       </CardContent>
