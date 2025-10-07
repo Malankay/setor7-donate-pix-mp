@@ -38,11 +38,23 @@ serve(async (req) => {
       },
       additional_info: {
         payer: {
+          first_name: name.split(' ')[0],
+          last_name: name.split(' ').slice(1).join(' ') || name.split(' ')[0],
           phone: {
             area_code: phone ? phone.replace(/\D/g, '').substring(0, 2) : '',
             number: phone ? phone.replace(/\D/g, '').substring(2) : '',
           },
+          registration_date: new Date().toISOString(),
         },
+        items: [
+          {
+            id: 'donation',
+            title: description || 'Doação Setor 7 Hardcore PVE',
+            description: `Doação de ${name} - Steam ID: ${steamId}`,
+            quantity: 1,
+            unit_price: parseFloat(amount),
+          },
+        ],
       },
       metadata: {
         steam_id: steamId || '',
