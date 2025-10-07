@@ -16,9 +16,42 @@ const DonationForm = () => {
   });
   const [showQrCode, setShowQrCode] = useState(false);
 
+  const formatCurrency = (value: string) => {
+    // Remove tudo exceto números
+    const numbers = value.replace(/\D/g, "");
+    
+    // Converte para centavos
+    const amount = parseFloat(numbers) / 100;
+    
+    // Retorna formatado
+    if (isNaN(amount)) return "";
+    return amount.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formatPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    
+    if (numbers.length <= 10) {
+      return numbers.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3").trim();
+    }
+    return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3").trim();
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === "amount") {
+      const formatted = formatCurrency(value);
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
+    } else if (name === "phone") {
+      const formatted = formatPhone(value);
+      setFormData((prev) => ({ ...prev, [name]: formatted }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const validateForm = () => {
@@ -32,7 +65,8 @@ const DonationForm = () => {
       return false;
     }
 
-    if (parseFloat(formData.amount) <= 0) {
+    const amountValue = parseFloat(formData.amount.replace(/\./g, "").replace(",", "."));
+    if (isNaN(amountValue) || amountValue <= 0) {
       toast.error("Valor deve ser maior que zero!");
       return false;
     }
@@ -75,7 +109,7 @@ const DonationForm = () => {
           <div className="space-y-4">
             <div className="text-center">
               <p className="text-lg font-semibold text-accent">
-                R$ {parseFloat(formData.amount).toFixed(2)}
+                R$ {formData.amount}
               </p>
               <p className="text-sm text-muted-foreground">Valor da doação</p>
             </div>
@@ -172,12 +206,10 @@ const DonationForm = () => {
             <Input
               id="amount"
               name="amount"
-              type="number"
-              step="0.01"
-              min="0.01"
+              type="text"
               value={formData.amount}
               onChange={handleChange}
-              placeholder="0.00"
+              placeholder="0,00"
               required
             />
           </div>
