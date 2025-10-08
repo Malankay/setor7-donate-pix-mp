@@ -48,6 +48,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
+  const [updatingStatuses, setUpdatingStatuses] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -179,6 +180,52 @@ const Admin = () => {
     return 'bg-accent/10 text-accent hover:bg-accent/20';
   };
 
+  const handleUpdateAllStatuses = async () => {
+    const pendingDonations = donations.filter(d => d.status !== 'approved');
+    
+    if (pendingDonations.length === 0) {
+      toast({
+        title: "Nenhuma doação pendente",
+        description: "Todas as doações já estão aprovadas.",
+      });
+      return;
+    }
+
+    setUpdatingStatuses(true);
+    let updatedCount = 0;
+
+    try {
+      for (const donation of pendingDonations) {
+        try {
+          const { data, error } = await supabase.functions.invoke('get-mercadopago-order', {
+            body: { orderId: donation.payment_id, donationId: donation.id }
+          });
+
+          if (!error && data?.status && data.status !== donation.status) {
+            updatedCount++;
+          }
+        } catch (error) {
+          console.error(`Erro ao atualizar doação ${donation.id}:`, error);
+        }
+      }
+
+      toast({
+        title: "Atualização concluída",
+        description: `${updatedCount} doação(ões) atualizada(s) com sucesso.`,
+      });
+
+      fetchDonations();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingStatuses(false);
+    }
+  };
+
   const handleStatusClick = async (paymentId: string, donationId: string) => {
     setLoadingOrder(true);
     try {
@@ -259,10 +306,28 @@ const Admin = () => {
 
                 <TabsContent value="donations">
                   <CardHeader>
-                    <CardTitle className="text-2xl">Doações Recebidas</CardTitle>
-                    <CardDescription>
-                      Total de {donations.length} doações
-                    </CardDescription>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Doações Recebidas</CardTitle>
+                        <CardDescription>
+                          Total de {donations.length} doações
+                        </CardDescription>
+                      </div>
+                      <Button 
+                        onClick={handleUpdateAllStatuses} 
+                        disabled={updatingStatuses}
+                        className="gap-2"
+                      >
+                        {updatingStatuses ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Atualizando...
+                          </>
+                        ) : (
+                          "Atualizar Status"
+                        )}
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="rounded-md border border-border/50">
