@@ -243,7 +243,7 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
               }}
               render={({ field }) => (
                 <NumericFormat
-                  value={field.value}
+                  value={field.value || "0"}
                   customInput={Input}
                   thousandSeparator="."
                   decimalSeparator=","
@@ -252,7 +252,7 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
                   prefix="R$ "
                   placeholder="R$ 0,00"
                   onValueChange={(values) => {
-                    field.onChange(values.value || "");
+                    field.onChange(values.value || "0");
                   }}
                 />
               )}
@@ -332,7 +332,7 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
                   }}
                   render={({ field }) => (
                     <NumericFormat
-                      value={field.value}
+                      value={field.value || "0"}
                       customInput={Input}
                       thousandSeparator="."
                       decimalSeparator=","
@@ -341,7 +341,7 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
                       prefix="R$ "
                       placeholder="R$ 0,00"
                       onValueChange={(values) => {
-                        field.onChange(values.value || "");
+                        field.onChange(values.value || "0");
                       }}
                     />
                   )}
