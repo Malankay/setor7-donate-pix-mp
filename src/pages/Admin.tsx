@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Plus } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
 import { ServerForm } from "@/components/ServerForm";
@@ -67,6 +67,7 @@ const Admin = () => {
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
+  const [showAddServerDialog, setShowAddServerDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
@@ -563,14 +564,25 @@ const Admin = () => {
 
                 <TabsContent value="servers">
                   <CardHeader>
-                    <CardTitle className="text-2xl">Servidores Cadastrados</CardTitle>
-                    <CardDescription>
-                      Total de {servidores.length} servidor(es) cadastrado(s)
-                    </CardDescription>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Servidores Cadastrados</CardTitle>
+                        <CardDescription>
+                          Total de {servidores.length} servidor(es) cadastrado(s)
+                        </CardDescription>
+                      </div>
+                      <Button 
+                        onClick={() => setShowAddServerDialog(true)} 
+                        className="gap-2 bg-red-900 hover:bg-red-800 text-white"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Cadastrar Servidor
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    {servidores.length > 0 && (
-                      <div className="mb-6 rounded-md border border-border/50">
+                    {servidores.length > 0 ? (
+                      <div className="rounded-md border border-border/50">
                         <Table>
                           <TableHeader>
                             <TableRow>
@@ -601,25 +613,11 @@ const Admin = () => {
                           </TableBody>
                         </Table>
                       </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhum servidor cadastrado ainda. Clique em "Cadastrar Servidor" para adicionar o primeiro.
+                      </div>
                     )}
-                    
-                    <Card className="backdrop-blur-sm bg-card/50 border-border/50">
-                      <CardHeader>
-                        <CardTitle className="text-xl">Cadastro de Servidor</CardTitle>
-                        <CardDescription>
-                          Cadastre um novo servidor com seus MODs
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <ServerForm onSuccess={() => {
-                          toast({
-                            title: "Sucesso",
-                            description: "Servidor cadastrado com sucesso!",
-                          });
-                          fetchServidores();
-                        }} />
-                      </CardContent>
-                    </Card>
                   </CardContent>
                 </TabsContent>
               </Tabs>
@@ -762,6 +760,26 @@ const Admin = () => {
                 </pre>
               </div>
             ) : null}
+          </DialogContent>
+        </Dialog>
+
+
+        <Dialog open={showAddServerDialog} onOpenChange={setShowAddServerDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Cadastrar Novo Servidor</DialogTitle>
+              <DialogDescription>
+                Preencha as informações do servidor e seus MODs
+              </DialogDescription>
+            </DialogHeader>
+            <ServerForm onSuccess={() => {
+              toast({
+                title: "Sucesso",
+                description: "Servidor cadastrado com sucesso!",
+              });
+              fetchServidores();
+              setShowAddServerDialog(false);
+            }} />
           </DialogContent>
         </Dialog>
 
