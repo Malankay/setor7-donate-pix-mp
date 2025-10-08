@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,9 +36,9 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
   
   const { register, control, handleSubmit, reset, formState: { errors } } = useForm<ServerFormData>({
     defaultValues: {
-      nome: servidor?.nome || "",
-      host: servidor?.host || "",
-      valor_mensal: servidor?.valor_mensal?.toString() || "",
+      nome: "",
+      host: "",
+      valor_mensal: "",
       mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
     },
   });
@@ -47,6 +47,52 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
     control,
     name: "mods",
   });
+
+  useEffect(() => {
+    const loadServidorData = async () => {
+      if (servidor) {
+        // Buscar MODs do servidor
+        const { data: mods, error } = await supabase
+          .from('servidores_mods')
+          .select('*')
+          .eq('servidor_id', servidor.id);
+
+        if (error) {
+          console.error('Erro ao carregar MODs:', error);
+          toast({
+            title: "Erro ao carregar MODs",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+
+        // Resetar formulário com dados do servidor e MODs
+        reset({
+          nome: servidor.nome,
+          host: servidor.host,
+          valor_mensal: servidor.valor_mensal.toString(),
+          mods: mods && mods.length > 0 
+            ? mods.map(mod => ({
+                nome_mod: mod.nome_mod,
+                discord: mod.discord || "",
+                loja_steam: mod.loja_steam || "",
+                valor_mensal: mod.valor_mensal.toString(),
+              }))
+            : [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
+        });
+      } else {
+        // Resetar para valores padrão ao criar novo servidor
+        reset({
+          nome: "",
+          host: "",
+          valor_mensal: "",
+          mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
+        });
+      }
+    };
+
+    loadServidorData();
+  }, [servidor, reset, toast]);
 
   const onSubmit = async (data: ServerFormData) => {
     setIsSubmitting(true);
