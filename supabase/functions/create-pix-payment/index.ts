@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -96,6 +97,37 @@ serve(async (req) => {
     };
 
     console.log('PIX payment created successfully:', pixData.payment_id);
+
+    // Save donation to database
+    try {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      const { error: dbError } = await supabase
+        .from('donations')
+        .insert({
+          payment_id: data.id.toString(),
+          name,
+          email,
+          phone,
+          steam_id: steamId,
+          amount: parseFloat(amount),
+          description: description || 'Doação Setor 7 Hardcore PVE',
+          status: data.status,
+          qr_code: pixData.qr_code,
+          qr_code_base64: pixData.qr_code_base64,
+          ticket_url: pixData.ticket_url,
+        });
+
+      if (dbError) {
+        console.error('Error saving donation to database:', dbError);
+      } else {
+        console.log('Donation saved to database successfully');
+      }
+    } catch (dbError) {
+      console.error('Failed to save donation:', dbError);
+    }
 
     return new Response(
       JSON.stringify(pixData),

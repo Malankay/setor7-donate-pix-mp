@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      donations: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          email: string
+          id: string
+          name: string
+          payment_id: string
+          phone: string | null
+          qr_code: string | null
+          qr_code_base64: string | null
+          status: string
+          steam_id: string | null
+          ticket_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          email: string
+          id?: string
+          name: string
+          payment_id: string
+          phone?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status: string
+          steam_id?: string | null
+          ticket_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          email?: string
+          id?: string
+          name?: string
+          payment_id?: string
+          phone?: string | null
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          steam_id?: string | null
+          ticket_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
