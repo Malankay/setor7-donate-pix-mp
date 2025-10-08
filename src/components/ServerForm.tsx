@@ -278,15 +278,13 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
         <CardContent className="space-y-4">
           {fields.map((field, index) => (
             <div key={field.id} className="p-4 border border-border/50 rounded-lg space-y-4 relative">
-              {fields.length > 1 && (
-                <Button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="absolute top-2 right-2 h-6 w-6 p-0 bg-red-900 hover:bg-red-800 text-white"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              )}
+              <Button
+                type="button"
+                onClick={() => remove(index)}
+                className="absolute top-2 right-2 h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+              >
+                <X className="h-4 w-4" />
+              </Button>
 
               <div className="space-y-2">
                 <Label htmlFor={`mods.${index}.nome_mod`}>Nome do Mod</Label>
