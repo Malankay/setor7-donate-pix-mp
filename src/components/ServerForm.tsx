@@ -1,9 +1,10 @@
 import React, { useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,64 +15,57 @@ interface Mod {
   valor_mensal: string;
 }
 
-interface ServerFormProps {
-  onSuccess: () => void;
+interface ServerFormData {
+  nome: string;
+  host: string;
+  valor_mensal: string;
+  mods: Mod[];
 }
 
-export const ServerForm = ({ onSuccess }: ServerFormProps) => {
-  const [nome, setNome] = useState("");
-  const [host, setHost] = useState("");
-  const [valorMensal, setValorMensal] = useState("");
-  const [mods, setMods] = useState<Mod[]>([
-    { nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }
-  ]);
-  const [loading, setLoading] = useState(false);
+export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  
+  const { register, control, handleSubmit, reset, formState: { errors } } = useForm<ServerFormData>({
+    defaultValues: {
+      nome: "",
+      host: "",
+      valor_mensal: "",
+      mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
+    },
+  });
 
-  const addMod = () => {
-    setMods([...mods, { nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }]);
-  };
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "mods",
+  });
 
-  const removeMod = (index: number) => {
-    setMods(mods.filter((_, i) => i !== index));
-  };
-
-  const updateMod = (index: number, field: keyof Mod, value: string) => {
-    const newMods = [...mods];
-    newMods[index][field] = value;
-    setMods(newMods);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const onSubmit = async (data: ServerFormData) => {
+    setIsSubmitting(true);
     try {
       // Insert servidor
-      const { data: servidor, error: servidorError } = await supabase
+      const { data: servidor, error: serverError } = await supabase
         .from("servidores")
         .insert({
-          nome,
-          host,
-          valor_mensal: parseFloat(valorMensal)
+          nome: data.nome,
+          host: data.host,
+          valor_mensal: parseFloat(data.valor_mensal),
         })
         .select()
         .single();
 
-      if (servidorError) throw servidorError;
+      if (serverError) throw serverError;
 
       // Insert mods
-      const modsToInsert = mods
-        .filter(mod => mod.nome_mod.trim() !== "")
-        .map(mod => ({
+      if (data.mods.length > 0) {
+        const modsToInsert = data.mods.map((mod) => ({
           servidor_id: servidor.id,
           nome_mod: mod.nome_mod,
           discord: mod.discord || null,
           loja_steam: mod.loja_steam || null,
-          valor_mensal: parseFloat(mod.valor_mensal)
+          valor_mensal: parseFloat(mod.valor_mensal),
         }));
 
-      if (modsToInsert.length > 0) {
         const { error: modsError } = await supabase
           .from("servidores_mods")
           .insert(modsToInsert);
@@ -81,15 +75,10 @@ export const ServerForm = ({ onSuccess }: ServerFormProps) => {
 
       toast({
         title: "Servidor cadastrado",
-        description: "O servidor foi cadastrado com sucesso.",
+        description: "O servidor foi cadastrado com sucesso!",
       });
 
-      // Reset form
-      setNome("");
-      setHost("");
-      setValorMensal("");
-      setMods([{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }]);
-      
+      reset();
       onSuccess();
     } catch (error: any) {
       toast({
@@ -98,13 +87,13 @@ export const ServerForm = ({ onSuccess }: ServerFormProps) => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Card className="backdrop-blur-sm bg-card/50 border-border/50">
         <CardHeader>
           <CardTitle>Informações do Servidor</CardTitle>
         </CardHeader>
@@ -113,123 +102,119 @@ export const ServerForm = ({ onSuccess }: ServerFormProps) => {
             <Label htmlFor="nome">Nome do Servidor</Label>
             <Input
               id="nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              required
+              {...register("nome", { required: "Nome é obrigatório" })}
               placeholder="Digite o nome do servidor"
             />
+            {errors.nome && (
+              <p className="text-sm text-destructive">{errors.nome.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="host">Host</Label>
             <Input
               id="host"
-              value={host}
-              onChange={(e) => setHost(e.target.value)}
-              required
+              {...register("host", { required: "Host é obrigatório" })}
               placeholder="Digite o host do servidor"
             />
+            {errors.host && (
+              <p className="text-sm text-destructive">{errors.host.message}</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="valorMensal">Valor Mensal</Label>
+            <Label htmlFor="valor_mensal">Valor Mensal (R$)</Label>
             <Input
-              id="valorMensal"
+              id="valor_mensal"
               type="number"
               step="0.01"
-              value={valorMensal}
-              onChange={(e) => setValorMensal(e.target.value)}
-              required
+              {...register("valor_mensal", { required: "Valor mensal é obrigatório" })}
               placeholder="0.00"
             />
+            {errors.valor_mensal && (
+              <p className="text-sm text-destructive">{errors.valor_mensal.message}</p>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>MODs</CardTitle>
-            <Button
-              type="button"
-              onClick={addMod}
-              className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
+      <Card className="backdrop-blur-sm bg-card/50 border-border/50">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>MODs</CardTitle>
+          <Button
+            type="button"
+            onClick={() => append({ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" })}
+            className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {mods.map((mod, index) => (
-            <Card key={index} className="border-border/50">
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h4 className="font-semibold">MOD {index + 1}</h4>
-                  {mods.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeMod(index)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+        <CardContent className="space-y-4">
+          {fields.map((field, index) => (
+            <div key={field.id} className="p-4 border border-border/50 rounded-lg space-y-4 relative">
+              {fields.length > 1 && (
+                <Button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="absolute top-2 right-2 h-6 w-6 p-0 bg-red-900 hover:bg-red-800 text-white"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
 
-                <div className="space-y-2">
-                  <Label htmlFor={`mod-nome-${index}`}>Nome do MOD</Label>
-                  <Input
-                    id={`mod-nome-${index}`}
-                    value={mod.nome_mod}
-                    onChange={(e) => updateMod(index, "nome_mod", e.target.value)}
-                    required
-                    placeholder="Digite o nome do MOD"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor={`mods.${index}.nome_mod`}>Nome do Mod</Label>
+                <Input
+                  {...register(`mods.${index}.nome_mod` as const, { required: "Nome do mod é obrigatório" })}
+                  placeholder="Digite o nome do mod"
+                />
+                {errors.mods?.[index]?.nome_mod && (
+                  <p className="text-sm text-destructive">{errors.mods[index]?.nome_mod?.message}</p>
+                )}
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor={`mod-discord-${index}`}>Discord</Label>
-                  <Input
-                    id={`mod-discord-${index}`}
-                    value={mod.discord}
-                    onChange={(e) => updateMod(index, "discord", e.target.value)}
-                    placeholder="Link do Discord"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor={`mods.${index}.discord`}>Discord</Label>
+                <Input
+                  {...register(`mods.${index}.discord` as const)}
+                  placeholder="Discord do mod (opcional)"
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor={`mod-loja-${index}`}>Loja Steam</Label>
-                  <Input
-                    id={`mod-loja-${index}`}
-                    value={mod.loja_steam}
-                    onChange={(e) => updateMod(index, "loja_steam", e.target.value)}
-                    placeholder="Link da Loja Steam"
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor={`mods.${index}.loja_steam`}>Loja Steam</Label>
+                <Input
+                  {...register(`mods.${index}.loja_steam` as const)}
+                  placeholder="URL da loja Steam (opcional)"
+                />
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor={`mod-valor-${index}`}>Valor Mensal</Label>
-                  <Input
-                    id={`mod-valor-${index}`}
-                    type="number"
-                    step="0.01"
-                    value={mod.valor_mensal}
-                    onChange={(e) => updateMod(index, "valor_mensal", e.target.value)}
-                    required
-                    placeholder="0.00"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+              <div className="space-y-2">
+                <Label htmlFor={`mods.${index}.valor_mensal`}>Valor Mensal (R$)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  {...register(`mods.${index}.valor_mensal` as const, { required: "Valor mensal é obrigatório" })}
+                  placeholder="0.00"
+                />
+                {errors.mods?.[index]?.valor_mensal && (
+                  <p className="text-sm text-destructive">{errors.mods[index]?.valor_mensal?.message}</p>
+                )}
+              </div>
+            </div>
           ))}
         </CardContent>
       </Card>
 
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "Cadastrando..." : "Cadastrar Servidor"}
-      </Button>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="bg-red-900 hover:bg-red-800 text-white"
+        >
+          {isSubmitting ? "Cadastrando..." : "Cadastrar Servidor"}
+        </Button>
+      </div>
     </form>
   );
 };
