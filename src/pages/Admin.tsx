@@ -58,6 +58,7 @@ const Admin = () => {
   const [selectedServidor, setSelectedServidor] = useState<Servidor | null>(null);
   const [editingServidor, setEditingServidor] = useState<Servidor | null>(null);
   const [showEditServerDialog, setShowEditServerDialog] = useState(false);
+  const [servidorToDelete, setServidorToDelete] = useState<string | null>(null);
   const [servidorMods, setServidorMods] = useState<ServidorMod[]>([]);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -145,6 +146,40 @@ const Admin = () => {
   const handleEditServidor = (servidor: Servidor) => {
     setEditingServidor(servidor);
     setShowEditServerDialog(true);
+  };
+
+  const handleDeleteServidor = async (servidorId: string) => {
+    try {
+      // Deletar MODs do servidor primeiro
+      const { error: modsError } = await supabase
+        .from("servidores_mods")
+        .delete()
+        .eq("servidor_id", servidorId);
+
+      if (modsError) throw modsError;
+
+      // Deletar servidor
+      const { error: servidorError } = await supabase
+        .from("servidores")
+        .delete()
+        .eq("id", servidorId);
+
+      if (servidorError) throw servidorError;
+
+      toast({
+        title: "Servidor deletado",
+        description: "O servidor e seus MODs foram removidos com sucesso.",
+      });
+
+      setServidorToDelete(null);
+      fetchServidores();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar servidor",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
   const fetchUsers = async () => {
     try {
@@ -534,6 +569,14 @@ const Admin = () => {
                                 <TableCell className="text-accent font-semibold">{formatCurrency(servidor.valor_mensal)}</TableCell>
                                 <TableCell>
                                   <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setServidorToDelete(servidor.id)}
+                                      className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
                                     <Button variant="ghost" size="sm" onClick={() => handleEditServidor(servidor)} className="text-white hover:text-white hover:bg-accent/10">
                                       <Pencil className="h-4 w-4 mr-1" />
                                       Editar
@@ -571,6 +614,23 @@ const Admin = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction onClick={() => userToDelete && handleDeleteUser(userToDelete)} className="bg-destructive hover:bg-destructive/90">
+                Deletar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!servidorToDelete} onOpenChange={() => setServidorToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja deletar este servidor? Todos os MODs associados também serão removidos. Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => servidorToDelete && handleDeleteServidor(servidorToDelete)} className="bg-destructive hover:bg-destructive/90">
                 Deletar
               </AlertDialogAction>
             </AlertDialogFooter>
