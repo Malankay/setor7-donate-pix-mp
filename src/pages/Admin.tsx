@@ -172,7 +172,7 @@ const Admin = () => {
     }).format(new Date(date));
   };
 
-  const handleStatusClick = async (paymentId: string) => {
+  const handleStatusClick = async (paymentId: string, donationId: string) => {
     setLoadingOrder(true);
     try {
       const { data, error } = await supabase.functions.invoke('get-mercadopago-order', {
@@ -182,6 +182,25 @@ const Admin = () => {
       if (error) throw error;
 
       setOrderData(data);
+
+      // Se o status retornado for diferente de "pending", atualizar no banco
+      if (data?.status && data.status !== "pending") {
+        const { error: updateError } = await supabase
+          .from('donations')
+          .update({ status: data.status })
+          .eq('id', donationId);
+
+        if (updateError) {
+          console.error('Erro ao atualizar status:', updateError);
+        } else {
+          toast({
+            title: "Status atualizado",
+            description: `O status da doação foi atualizado para: ${data.status}`,
+          });
+          // Recarregar as doações para refletir a mudança
+          fetchDonations();
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao buscar dados do pedido",
@@ -277,7 +296,7 @@ const Admin = () => {
                                 <TableCell className="text-accent font-semibold">{formatCurrency(donation.amount)}</TableCell>
                                 <TableCell>
                                   <button
-                                    onClick={() => handleStatusClick(donation.payment_id)}
+                                    onClick={() => handleStatusClick(donation.payment_id, donation.id)}
                                     className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-accent/10 text-accent hover:bg-accent/20 transition-colors cursor-pointer"
                                   >
                                     {donation.status}
