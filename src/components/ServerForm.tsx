@@ -154,10 +154,19 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
             <Controller
               name="valor_mensal"
               control={control}
-              rules={{ required: "Valor mensal é obrigatório" }}
+              rules={{ 
+                required: "Valor mensal é obrigatório",
+                validate: (value) => {
+                  const num = parseFloat(value);
+                  if (isNaN(num) || num <= 0) {
+                    return "Valor deve ser maior que zero";
+                  }
+                  return true;
+                }
+              }}
               render={({ field }) => (
                 <NumericFormat
-                  {...field}
+                  value={field.value}
                   customInput={Input}
                   thousandSeparator="."
                   decimalSeparator=","
@@ -166,7 +175,7 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
                   prefix="R$ "
                   placeholder="R$ 0,00"
                   onValueChange={(values) => {
-                    field.onChange(values.value);
+                    field.onChange(values.value || "");
                   }}
                 />
               )}
@@ -234,10 +243,19 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
                 <Controller
                   name={`mods.${index}.valor_mensal` as const}
                   control={control}
-                  rules={{ required: "Valor mensal é obrigatório" }}
+                  rules={{ 
+                    required: "Valor mensal é obrigatório",
+                    validate: (value) => {
+                      const num = parseFloat(value);
+                      if (isNaN(num) || num <= 0) {
+                        return "Valor deve ser maior que zero";
+                      }
+                      return true;
+                    }
+                  }}
                   render={({ field }) => (
                     <NumericFormat
-                      {...field}
+                      value={field.value}
                       customInput={Input}
                       thousandSeparator="."
                       decimalSeparator=","
@@ -246,7 +264,7 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
                       prefix="R$ "
                       placeholder="R$ 0,00"
                       onValueChange={(values) => {
-                        field.onChange(values.value);
+                        field.onChange(values.value || "");
                       }}
                     />
                   )}
