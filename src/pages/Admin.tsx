@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Pencil } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Pencil, Mail } from "lucide-react";
 import { Plus } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
@@ -688,16 +688,59 @@ const Admin = () => {
                 {selectedDonation.qr_code_base64 && <div className="flex flex-col items-center gap-2 pt-4 border-t border-border/50">
                     <p className="text-sm text-muted-foreground">QR Code PIX</p>
                     <img src={`data:image/png;base64,${selectedDonation.qr_code_base64}`} alt="QR Code PIX" className="w-64 h-64 border border-border/50 rounded-lg" />
-                    {selectedDonation.qr_code && <Button variant="outline" size="sm" className="gap-2" onClick={() => {
-                navigator.clipboard.writeText(selectedDonation.qr_code!);
-                toast({
-                  title: "Código copiado!",
-                  description: "O código PIX foi copiado para a área de transferência."
-                });
-              }}>
+                    {selectedDonation.qr_code && <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="gap-2" onClick={() => {
+                        navigator.clipboard.writeText(selectedDonation.qr_code!);
+                        toast({
+                          title: "Código copiado!",
+                          description: "O código PIX foi copiado para a área de transferência."
+                        });
+                      }}>
                         <Copy className="h-4 w-4" />
                         Copiar código PIX
-                      </Button>}
+                      </Button>
+                      {selectedDonation.status === 'pending' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-2"
+                          onClick={async () => {
+                            try {
+                              const { data, error } = await supabase.functions.invoke('resend-donation-email', {
+                                body: {
+                                  name: selectedDonation.name,
+                                  email: selectedDonation.email,
+                                  phone: selectedDonation.phone,
+                                  steamId: selectedDonation.steam_id,
+                                  amount: selectedDonation.amount,
+                                  description: selectedDonation.description,
+                                  qrCodeBase64: selectedDonation.qr_code_base64,
+                                  qrCode: selectedDonation.qr_code,
+                                  createdAt: selectedDonation.created_at
+                                }
+                              });
+
+                              if (error) throw error;
+
+                              toast({
+                                title: "Email enviado!",
+                                description: "O email com os detalhes da doação foi enviado com sucesso."
+                              });
+                            } catch (error) {
+                              console.error('Error resending email:', error);
+                              toast({
+                                title: "Erro ao enviar email",
+                                description: "Não foi possível enviar o email. Tente novamente.",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                        >
+                          <Mail className="h-4 w-4" />
+                          Reenviar
+                        </Button>
+                      )}
+                    </div>}
                   </div>}
               </div>}
           </DialogContent>
