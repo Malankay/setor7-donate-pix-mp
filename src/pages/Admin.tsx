@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
+import { ServerForm } from "@/components/ServerForm";
 
 interface Donation {
   id: string;
@@ -325,9 +326,10 @@ const Admin = () => {
             <Card className="backdrop-blur-sm bg-card/50 border-border/50">
               <Tabs defaultValue="donations" className="w-full">
                 <CardHeader>
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="donations">Doações</TabsTrigger>
                     <TabsTrigger value="users">Usuários</TabsTrigger>
+                    <TabsTrigger value="servers">Servidor</TabsTrigger>
                   </TabsList>
                 </CardHeader>
 
@@ -494,6 +496,23 @@ const Admin = () => {
                         </TableBody>
                       </Table>
                     </div>
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="servers">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Cadastro de Servidor</CardTitle>
+                    <CardDescription>
+                      Cadastre um novo servidor com seus MODs
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ServerForm onSuccess={() => {
+                      toast({
+                        title: "Sucesso",
+                        description: "Servidor cadastrado com sucesso!",
+                      });
+                    }} />
                   </CardContent>
                 </TabsContent>
               </Tabs>

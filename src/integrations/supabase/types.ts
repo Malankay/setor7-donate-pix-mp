@@ -89,6 +89,74 @@ export type Database = {
         }
         Relationships: []
       }
+      servidores: {
+        Row: {
+          created_at: string
+          host: string
+          id: string
+          nome: string
+          updated_at: string
+          valor_mensal: number
+        }
+        Insert: {
+          created_at?: string
+          host: string
+          id?: string
+          nome: string
+          updated_at?: string
+          valor_mensal: number
+        }
+        Update: {
+          created_at?: string
+          host?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          valor_mensal?: number
+        }
+        Relationships: []
+      }
+      servidores_mods: {
+        Row: {
+          created_at: string
+          discord: string | null
+          id: string
+          loja_steam: string | null
+          nome_mod: string
+          servidor_id: string
+          updated_at: string
+          valor_mensal: number
+        }
+        Insert: {
+          created_at?: string
+          discord?: string | null
+          id?: string
+          loja_steam?: string | null
+          nome_mod: string
+          servidor_id: string
+          updated_at?: string
+          valor_mensal: number
+        }
+        Update: {
+          created_at?: string
+          discord?: string | null
+          id?: string
+          loja_steam?: string | null
+          nome_mod?: string
+          servidor_id?: string
+          updated_at?: string
+          valor_mensal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servidores_mods_servidor_id_fkey"
+            columns: ["servidor_id"]
+            isOneToOne: false
+            referencedRelation: "servidores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
