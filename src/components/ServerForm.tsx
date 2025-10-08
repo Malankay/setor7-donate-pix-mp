@@ -44,13 +44,25 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
   const onSubmit = async (data: ServerFormData) => {
     setIsSubmitting(true);
     try {
+      // Validar valor_mensal
+      const valorMensal = parseFloat(data.valor_mensal);
+      if (isNaN(valorMensal) || valorMensal <= 0) {
+        toast({
+          title: "Erro de validação",
+          description: "O valor mensal do servidor deve ser maior que zero.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Insert servidor
       const { data: servidor, error: serverError } = await supabase
         .from("servidores")
         .insert({
           nome: data.nome,
           host: data.host,
-          valor_mensal: parseFloat(data.valor_mensal),
+          valor_mensal: valorMensal,
         })
         .select()
         .single();
@@ -59,6 +71,20 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
       // Insert mods
       if (data.mods.length > 0) {
+        // Validar valores dos mods
+        for (let i = 0; i < data.mods.length; i++) {
+          const valorModMensal = parseFloat(data.mods[i].valor_mensal);
+          if (isNaN(valorModMensal) || valorModMensal <= 0) {
+            toast({
+              title: "Erro de validação",
+              description: `O valor mensal do MOD ${i + 1} deve ser maior que zero.`,
+              variant: "destructive",
+            });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
         const modsToInsert = data.mods.map((mod) => ({
           servidor_id: servidor.id,
           nome_mod: mod.nome_mod,
