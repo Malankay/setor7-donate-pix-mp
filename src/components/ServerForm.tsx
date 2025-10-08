@@ -38,8 +38,8 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
     defaultValues: {
       nome: "",
       host: "",
-      valor_mensal: "",
-      mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
+      valor_mensal: "0",
+      mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "0" }],
     },
   });
 
@@ -78,15 +78,15 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
                 loja_steam: mod.loja_steam || "",
                 valor_mensal: mod.valor_mensal.toString(),
               }))
-            : [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
+            : [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "0" }],
         });
       } else {
         // Resetar para valores padrão ao criar novo servidor
         reset({
           nome: "",
           host: "",
-          valor_mensal: "",
-          mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
+          valor_mensal: "0",
+          mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "0" }],
         });
       }
     };
@@ -269,7 +269,7 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
           <CardTitle>MODs</CardTitle>
           <Button
             type="button"
-            onClick={() => append({ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" })}
+            onClick={() => append({ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "0" })}
             className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
           >
             <Plus className="h-4 w-4" />
