@@ -5,9 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2 } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2 } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
+import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
 
 interface Donation {
   id: string;
@@ -25,11 +28,23 @@ interface Donation {
   ticket_url: string | null;
 }
 
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string | null;
+  created_at: string;
+}
+
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [showAddUserDialog, setShowAddUserDialog] = useState(false);
+  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,8 +76,28 @@ const Admin = () => {
   useEffect(() => {
     if (user) {
       fetchDonations();
+      fetchUsers();
     }
   }, [user]);
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setUsers(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar usuários",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchDonations = async () => {
     try {
@@ -89,6 +124,33 @@ const Admin = () => {
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const { error } = await supabase.auth.admin.deleteUser(userId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário deletado",
+        description: "O usuário foi removido do sistema.",
+      });
+
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditUser = (user: UserProfile) => {
+    setSelectedUser(user);
+    setShowEditUserDialog(true);
   };
 
   const formatCurrency = (value: number) => {
@@ -131,61 +193,173 @@ const Admin = () => {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Doações Recebidas</CardTitle>
-            <CardDescription>
-              Total de {donations.length} doações
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {donations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        Nenhuma doação encontrada
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    donations.map((donation) => (
-                      <TableRow key={donation.id}>
-                        <TableCell>{formatDate(donation.created_at)}</TableCell>
-                        <TableCell className="font-medium">{donation.name}</TableCell>
-                        <TableCell>{donation.email}</TableCell>
-                        <TableCell>{formatCurrency(donation.amount)}</TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-primary/10 text-primary">
-                            {donation.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedDonation(donation)}
-                          >
-                            Ver Detalhes
-                          </Button>
-                        </TableCell>
+          <Tabs defaultValue="donations" className="w-full">
+            <CardHeader>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="donations">Doações</TabsTrigger>
+                <TabsTrigger value="users">Usuários</TabsTrigger>
+              </TabsList>
+            </CardHeader>
+
+            <TabsContent value="donations">
+              <CardHeader>
+                <CardTitle>Doações Recebidas</CardTitle>
+                <CardDescription>
+                  Total de {donations.length} doações
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
+                    </TableHeader>
+                    <TableBody>
+                      {donations.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            Nenhuma doação encontrada
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        donations.map((donation) => (
+                          <TableRow key={donation.id}>
+                            <TableCell>{formatDate(donation.created_at)}</TableCell>
+                            <TableCell className="font-medium">{donation.name}</TableCell>
+                            <TableCell>{donation.email}</TableCell>
+                            <TableCell>{formatCurrency(donation.amount)}</TableCell>
+                            <TableCell>
+                              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-primary/10 text-primary">
+                                {donation.status}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedDonation(donation)}
+                              >
+                                Ver Detalhes
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </TabsContent>
+
+            <TabsContent value="users">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Usuários do Sistema</CardTitle>
+                    <CardDescription>
+                      Total de {users.length} usuários cadastrados
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => setShowAddUserDialog(true)}>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Adicionar Usuário
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Data de Cadastro</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            Nenhum usuário encontrado
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        users.map((userProfile) => (
+                          <TableRow key={userProfile.id}>
+                            <TableCell className="font-medium">
+                              {userProfile.full_name || "-"}
+                            </TableCell>
+                            <TableCell>{userProfile.email}</TableCell>
+                            <TableCell>{formatDate(userProfile.created_at)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditUser(userProfile)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setUserToDelete(userProfile.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </TabsContent>
+          </Tabs>
         </Card>
+
+        <AddUserDialog
+          open={showAddUserDialog}
+          onOpenChange={setShowAddUserDialog}
+          onSuccess={fetchUsers}
+        />
+
+        <EditUserDialog
+          open={showEditUserDialog}
+          onOpenChange={setShowEditUserDialog}
+          user={selectedUser}
+          onSuccess={fetchUsers}
+        />
+
+        <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja deletar este usuário? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => userToDelete && handleDeleteUser(userToDelete)}
+                className="bg-destructive hover:bg-destructive/90"
+              >
+                Deletar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={!!selectedDonation} onOpenChange={() => setSelectedDonation(null)}>
           <DialogContent className="max-w-2xl">
