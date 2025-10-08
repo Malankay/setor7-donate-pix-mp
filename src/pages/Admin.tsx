@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, UserPlus, Edit, Trash2 } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
 
@@ -549,6 +549,23 @@ const Admin = () => {
                       alt="QR Code PIX" 
                       className="w-64 h-64 border border-border/50 rounded-lg"
                     />
+                    {selectedDonation.qr_code && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedDonation.qr_code!);
+                          toast({
+                            title: "Código copiado!",
+                            description: "O código PIX foi copiado para a área de transferência.",
+                          });
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                        Copiar código PIX
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
