@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { NumericFormat } from "react-number-format";
 
 interface Mod {
   nome_mod: string;
@@ -124,12 +125,25 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
           <div className="space-y-2">
             <Label htmlFor="valor_mensal">Valor Mensal (R$)</Label>
-            <Input
-              id="valor_mensal"
-              type="number"
-              step="0.01"
-              {...register("valor_mensal", { required: "Valor mensal é obrigatório" })}
-              placeholder="0.00"
+            <Controller
+              name="valor_mensal"
+              control={control}
+              rules={{ required: "Valor mensal é obrigatório" }}
+              render={({ field }) => (
+                <NumericFormat
+                  {...field}
+                  customInput={Input}
+                  thousandSeparator="."
+                  decimalSeparator=","
+                  decimalScale={2}
+                  fixedDecimalScale
+                  prefix="R$ "
+                  placeholder="R$ 0,00"
+                  onValueChange={(values) => {
+                    field.onChange(values.value);
+                  }}
+                />
+              )}
             />
             {errors.valor_mensal && (
               <p className="text-sm text-destructive">{errors.valor_mensal.message}</p>
@@ -191,11 +205,25 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
 
               <div className="space-y-2">
                 <Label htmlFor={`mods.${index}.valor_mensal`}>Valor Mensal (R$)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  {...register(`mods.${index}.valor_mensal` as const, { required: "Valor mensal é obrigatório" })}
-                  placeholder="0.00"
+                <Controller
+                  name={`mods.${index}.valor_mensal` as const}
+                  control={control}
+                  rules={{ required: "Valor mensal é obrigatório" }}
+                  render={({ field }) => (
+                    <NumericFormat
+                      {...field}
+                      customInput={Input}
+                      thousandSeparator="."
+                      decimalSeparator=","
+                      decimalScale={2}
+                      fixedDecimalScale
+                      prefix="R$ "
+                      placeholder="R$ 0,00"
+                      onValueChange={(values) => {
+                        field.onChange(values.value);
+                      }}
+                    />
+                  )}
                 />
                 {errors.mods?.[index]?.valor_mensal && (
                   <p className="text-sm text-destructive">{errors.mods[index]?.valor_mensal?.message}</p>
