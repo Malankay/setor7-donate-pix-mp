@@ -81,12 +81,17 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Administração</CardTitle>
-          <CardDescription>Acesse o painel de administração</CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-darker-bg">
+      {/* Animated background */}
+      <div className="fixed inset-0 bg-gradient-hero opacity-50 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-glow opacity-20 pointer-events-none animate-pulse" />
+      
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <Card className="w-full max-w-md backdrop-blur-sm bg-card/50 border-border/50">
+          <CardHeader>
+            <CardTitle className="text-2xl">Administração</CardTitle>
+            <CardDescription>Acesse o painel de administração</CardDescription>
+          </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
@@ -157,6 +162,7 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

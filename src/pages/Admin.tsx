@@ -179,154 +179,176 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Painel de Administração</h1>
-            <p className="text-muted-foreground">Gerencie as doações recebidas</p>
+    <div className="min-h-screen bg-darker-bg">
+      {/* Animated background */}
+      <div className="fixed inset-0 bg-gradient-hero opacity-50 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-glow opacity-20 pointer-events-none animate-pulse" />
+      
+      <div className="relative z-10">
+        {/* Header */}
+        <header className="py-8 px-4 border-b border-border/50 backdrop-blur-sm">
+          <div className="container mx-auto max-w-7xl">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+                  PAINEL DE ADMINISTRAÇÃO
+                </h1>
+                <p className="text-accent font-semibold mt-1">
+                  Gerencie doações e usuários
+                </p>
+              </div>
+              <Button onClick={handleSignOut} variant="outline" className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Sair
+              </Button>
+            </div>
           </div>
-          <Button onClick={handleSignOut} variant="outline">
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
-        </div>
+        </header>
 
-        <Card>
-          <Tabs defaultValue="donations" className="w-full">
-            <CardHeader>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="donations">Doações</TabsTrigger>
-                <TabsTrigger value="users">Usuários</TabsTrigger>
-              </TabsList>
-            </CardHeader>
 
-            <TabsContent value="donations">
-              <CardHeader>
-                <CardTitle>Doações Recebidas</CardTitle>
-                <CardDescription>
-                  Total de {donations.length} doações
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Valor</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {donations.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={6} className="text-center text-muted-foreground">
-                            Nenhuma doação encontrada
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        donations.map((donation) => (
-                          <TableRow key={donation.id}>
-                            <TableCell>{formatDate(donation.created_at)}</TableCell>
-                            <TableCell className="font-medium">{donation.name}</TableCell>
-                            <TableCell>{donation.email}</TableCell>
-                            <TableCell>{formatCurrency(donation.amount)}</TableCell>
-                            <TableCell>
-                              <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-primary/10 text-primary">
-                                {donation.status}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setSelectedDonation(donation)}
-                              >
-                                Ver Detalhes
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </TabsContent>
+        {/* Content */}
+        <section className="py-8 px-4">
+          <div className="container mx-auto max-w-7xl">
+            <Card className="backdrop-blur-sm bg-card/50 border-border/50">
+              <Tabs defaultValue="donations" className="w-full">
+                <CardHeader>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="donations">Doações</TabsTrigger>
+                    <TabsTrigger value="users">Usuários</TabsTrigger>
+                  </TabsList>
+                </CardHeader>
 
-            <TabsContent value="users">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Usuários do Sistema</CardTitle>
+                <TabsContent value="donations">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Doações Recebidas</CardTitle>
                     <CardDescription>
-                      Total de {users.length} usuários cadastrados
+                      Total de {donations.length} doações
                     </CardDescription>
-                  </div>
-                  <Button onClick={() => setShowAddUserDialog(true)}>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Adicionar Usuário
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Data de Cadastro</TableHead>
-                        <TableHead>Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            Nenhum usuário encontrado
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        users.map((userProfile) => (
-                          <TableRow key={userProfile.id}>
-                            <TableCell className="font-medium">
-                              {userProfile.full_name || "-"}
-                            </TableCell>
-                            <TableCell>{userProfile.email}</TableCell>
-                            <TableCell>{formatDate(userProfile.created_at)}</TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditUser(userProfile)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setUserToDelete(userProfile.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-md border border-border/50">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Data</TableHead>
+                            <TableHead>Nome</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Valor</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Ações</TableHead>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </TabsContent>
-          </Tabs>
-        </Card>
+                        </TableHeader>
+                        <TableBody>
+                          {donations.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={6} className="text-center text-muted-foreground">
+                                Nenhuma doação encontrada
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            donations.map((donation) => (
+                              <TableRow key={donation.id}>
+                                <TableCell>{formatDate(donation.created_at)}</TableCell>
+                                <TableCell className="font-medium">{donation.name}</TableCell>
+                                <TableCell>{donation.email}</TableCell>
+                                <TableCell className="text-accent font-semibold">{formatCurrency(donation.amount)}</TableCell>
+                                <TableCell>
+                                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-accent/10 text-accent">
+                                    {donation.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setSelectedDonation(donation)}
+                                    className="hover:text-accent"
+                                  >
+                                    Ver Detalhes
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="users">
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Usuários do Sistema</CardTitle>
+                        <CardDescription>
+                          Total de {users.length} usuários cadastrados
+                        </CardDescription>
+                      </div>
+                      <Button onClick={() => setShowAddUserDialog(true)} className="gap-2">
+                        <UserPlus className="h-4 w-4" />
+                        Adicionar Usuário
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-md border border-border/50">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Nome</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Data de Cadastro</TableHead>
+                            <TableHead>Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {users.length === 0 ? (
+                            <TableRow>
+                              <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                Nenhum usuário encontrado
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            users.map((userProfile) => (
+                              <TableRow key={userProfile.id}>
+                                <TableCell className="font-medium">
+                                  {userProfile.full_name || "-"}
+                                </TableCell>
+                                <TableCell>{userProfile.email}</TableCell>
+                                <TableCell>{formatDate(userProfile.created_at)}</TableCell>
+                                <TableCell>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditUser(userProfile)}
+                                      className="hover:text-accent"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setUserToDelete(userProfile.id)}
+                                      className="hover:text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </TabsContent>
+              </Tabs>
+            </Card>
+          </div>
+        </section>
 
         <AddUserDialog
           open={showAddUserDialog}
@@ -361,10 +383,11 @@ const Admin = () => {
           </AlertDialogContent>
         </AlertDialog>
 
+
         <Dialog open={!!selectedDonation} onOpenChange={() => setSelectedDonation(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl backdrop-blur-sm bg-card/95">
             <DialogHeader>
-              <DialogTitle>Detalhes da Doação</DialogTitle>
+              <DialogTitle className="text-2xl">Detalhes da Doação</DialogTitle>
               <DialogDescription>
                 Informações completas sobre a doação
               </DialogDescription>
@@ -390,7 +413,7 @@ const Admin = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Valor</p>
-                    <p className="font-medium text-lg">{formatCurrency(selectedDonation.amount)}</p>
+                    <p className="font-medium text-lg text-accent">{formatCurrency(selectedDonation.amount)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
