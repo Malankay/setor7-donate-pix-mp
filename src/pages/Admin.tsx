@@ -316,7 +316,7 @@ const Admin = () => {
                       <Button 
                         onClick={handleUpdateAllStatuses} 
                         disabled={updatingStatuses}
-                        className="gap-2"
+                        className="gap-2 bg-red-900 hover:bg-red-800 text-white"
                       >
                         {updatingStatuses ? (
                           <>
