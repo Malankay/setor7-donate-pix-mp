@@ -541,6 +541,16 @@ const Admin = () => {
                     <p className="font-medium">{selectedDonation.description}</p>
                   </div>
                 )}
+                {selectedDonation.qr_code_base64 && (
+                  <div className="flex flex-col items-center gap-2 pt-4 border-t border-border/50">
+                    <p className="text-sm text-muted-foreground">QR Code PIX</p>
+                    <img 
+                      src={`data:image/png;base64,${selectedDonation.qr_code_base64}`} 
+                      alt="QR Code PIX" 
+                      className="w-64 h-64 border border-border/50 rounded-lg"
+                    />
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
