@@ -172,6 +172,13 @@ const Admin = () => {
     }).format(new Date(date));
   };
 
+  const getStatusColor = (status: string) => {
+    if (status === 'approved') {
+      return 'bg-green-500/10 text-green-700 hover:bg-green-500/20';
+    }
+    return 'bg-accent/10 text-accent hover:bg-accent/20';
+  };
+
   const handleStatusClick = async (paymentId: string, donationId: string) => {
     setLoadingOrder(true);
     try {
@@ -287,7 +294,7 @@ const Admin = () => {
                                 <TableCell>
                                   <button
                                     onClick={() => handleStatusClick(donation.payment_id, donation.id)}
-                                    className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-accent/10 text-accent hover:bg-accent/20 transition-colors cursor-pointer"
+                                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium transition-colors cursor-pointer ${getStatusColor(donation.status)}`}
                                   >
                                     {donation.status}
                                   </button>
