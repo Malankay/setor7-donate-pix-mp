@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
 import DonationForm from "@/components/DonationForm";
 import logoSetor7 from "@/assets/logoSetor7.jpg";
-import { Headphones, Users, Zap } from "lucide-react";
+import { Headphones, Users, Zap, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
 const Index = () => {
   return <div className="min-h-screen bg-darker-bg">
       {/* Animated background */}
@@ -10,7 +12,14 @@ const Index = () => {
       <div className="relative z-10">
         {/* Header */}
         <header className="py-8 px-4 text-center border-b border-border/50 backdrop-blur-sm">
-          <div className="container mx-auto max-w-6xl">
+          <div className="container mx-auto max-w-6xl relative">
+            <Link to="/auth" className="absolute right-0 top-0">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Shield className="w-4 h-4" />
+                Admin
+              </Button>
+            </Link>
+            
             <div className="flex items-center justify-center gap-4 mb-4">
               <img src={logoSetor7} alt="Setor 7 Logo" className="w-20 h-20 rounded-full logo-glow animate-pulse" />
             </div>
