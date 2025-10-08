@@ -176,30 +176,20 @@ const Admin = () => {
     setLoadingOrder(true);
     try {
       const { data, error } = await supabase.functions.invoke('get-mercadopago-order', {
-        body: { orderId: paymentId }
+        body: { orderId: paymentId, donationId }
       });
 
       if (error) throw error;
 
       setOrderData(data);
 
-      // Se o status retornado for diferente de "pending", atualizar no banco
+      // Se o status foi atualizado, mostrar notificação e recarregar
       if (data?.status && data.status !== "pending") {
-        const { error: updateError } = await supabase
-          .from('donations')
-          .update({ status: data.status })
-          .eq('id', donationId);
-
-        if (updateError) {
-          console.error('Erro ao atualizar status:', updateError);
-        } else {
-          toast({
-            title: "Status atualizado",
-            description: `O status da doação foi atualizado para: ${data.status}`,
-          });
-          // Recarregar as doações para refletir a mudança
-          fetchDonations();
-        }
+        toast({
+          title: "Status atualizado",
+          description: `O status da doação foi atualizado para: ${data.status}`,
+        });
+        fetchDonations();
       }
     } catch (error: any) {
       toast({

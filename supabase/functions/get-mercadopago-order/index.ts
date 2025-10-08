@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { orderId } = await req.json();
+    const { orderId, donationId } = await req.json();
     
     if (!orderId) {
       throw new Error('Order ID é obrigatório');
@@ -41,6 +42,24 @@ serve(async (req) => {
 
     const orderData = await response.json();
     console.log('Dados do pedido recuperados com sucesso');
+
+    // Se o status for diferente de pending e donationId foi fornecido, atualizar no banco
+    if (orderData?.status && orderData.status !== 'pending' && donationId) {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+      const { error: updateError } = await supabase
+        .from('donations')
+        .update({ status: orderData.status })
+        .eq('id', donationId);
+
+      if (updateError) {
+        console.error('Erro ao atualizar status no banco:', updateError);
+      } else {
+        console.log(`Status atualizado para: ${orderData.status}`);
+      }
+    }
 
     return new Response(
       JSON.stringify(orderData),
