@@ -262,7 +262,7 @@ const Admin = () => {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => setSelectedDonation(donation)}
-                                    className="hover:text-accent"
+                                    className="text-white hover:text-white hover:bg-accent/10"
                                   >
                                     Ver Detalhes
                                   </Button>
