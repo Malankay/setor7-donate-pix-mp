@@ -46,6 +46,8 @@ const Admin = () => {
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [orderData, setOrderData] = useState<any | null>(null);
+  const [loadingOrder, setLoadingOrder] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -170,6 +172,27 @@ const Admin = () => {
     }).format(new Date(date));
   };
 
+  const handleStatusClick = async (paymentId: string) => {
+    setLoadingOrder(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-mercadopago-order', {
+        body: { orderId: paymentId }
+      });
+
+      if (error) throw error;
+
+      setOrderData(data);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao buscar dados do pedido",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingOrder(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -253,9 +276,12 @@ const Admin = () => {
                                 <TableCell>{donation.email}</TableCell>
                                 <TableCell className="text-accent font-semibold">{formatCurrency(donation.amount)}</TableCell>
                                 <TableCell>
-                                  <span className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-accent/10 text-accent">
+                                  <button
+                                    onClick={() => handleStatusClick(donation.payment_id)}
+                                    className="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-accent/10 text-accent hover:bg-accent/20 transition-colors cursor-pointer"
+                                  >
                                     {donation.status}
-                                  </span>
+                                  </button>
                                 </TableCell>
                                 <TableCell>
                                   <Button
@@ -436,6 +462,28 @@ const Admin = () => {
                 )}
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!orderData} onOpenChange={() => setOrderData(null)}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Dados do Mercado Pago</DialogTitle>
+              <DialogDescription>
+                Informações completas retornadas pela API
+              </DialogDescription>
+            </DialogHeader>
+            {loadingOrder ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : orderData ? (
+              <div className="space-y-4">
+                <pre className="bg-muted/50 p-4 rounded-lg overflow-x-auto text-xs">
+                  {JSON.stringify(orderData, null, 2)}
+                </pre>
+              </div>
+            ) : null}
           </DialogContent>
         </Dialog>
       </div>

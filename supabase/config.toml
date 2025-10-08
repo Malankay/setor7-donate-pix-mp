@@ -2,3 +2,6 @@ project_id = "odnysftxwdfaujtmzerg"
 
 [functions.create-pix-payment]
 verify_jwt = false
+
+[functions.get-mercadopago-order]
+verify_jwt = false
