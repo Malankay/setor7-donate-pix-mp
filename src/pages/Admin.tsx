@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
 
@@ -49,6 +49,7 @@ const Admin = () => {
   const [orderData, setOrderData] = useState<any | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [updatingStatuses, setUpdatingStatuses] = useState(false);
+  const [cancellingDonation, setCancellingDonation] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -226,6 +227,32 @@ const Admin = () => {
     }
   };
 
+  const handleCancelDonation = async (paymentId: string, donationId: string) => {
+    setCancellingDonation(donationId);
+    try {
+      const { data, error } = await supabase.functions.invoke('cancel-mercadopago-order', {
+        body: { orderId: paymentId, donationId }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Doação cancelada",
+        description: "A doação foi cancelada com sucesso.",
+      });
+
+      fetchDonations();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao cancelar doação",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancellingDonation(null);
+    }
+  };
+
   const handleStatusClick = async (paymentId: string, donationId: string) => {
     setLoadingOrder(true);
     try {
@@ -365,14 +392,31 @@ const Admin = () => {
                                   </button>
                                 </TableCell>
                                 <TableCell>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => setSelectedDonation(donation)}
-                                    className="text-white hover:text-white hover:bg-accent/10"
-                                  >
-                                    Ver Detalhes
-                                  </Button>
+                                  <div className="flex gap-2">
+                                    {donation.status === 'pending' && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleCancelDonation(donation.payment_id, donation.id)}
+                                        disabled={cancellingDonation === donation.id}
+                                        className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+                                      >
+                                        {cancellingDonation === donation.id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <X className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    )}
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setSelectedDonation(donation)}
+                                      className="text-white hover:text-white hover:bg-accent/10"
+                                    >
+                                      Ver Detalhes
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))
