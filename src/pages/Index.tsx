@@ -15,7 +15,7 @@ const Index = () => {
         <header className="py-8 px-4 text-center border-b border-border/50 backdrop-blur-sm">
           <div className="container mx-auto max-w-6xl relative">
             <Link to="/auth" className="absolute right-0 top-0">
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 hover:bg-red-900 hover:text-white hover:border-red-900">
                 <Shield className="w-4 h-4" />
                 Admin
               </Button>
