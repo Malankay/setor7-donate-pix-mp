@@ -23,15 +23,22 @@ interface ServerFormData {
   mods: Mod[];
 }
 
-export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
+interface Servidor {
+  id: string;
+  nome: string;
+  host: string;
+  valor_mensal: number;
+}
+
+export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null; onSuccess: () => void }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
   const { register, control, handleSubmit, reset, formState: { errors } } = useForm<ServerFormData>({
     defaultValues: {
-      nome: "",
-      host: "",
-      valor_mensal: "",
+      nome: servidor?.nome || "",
+      host: servidor?.host || "",
+      valor_mensal: servidor?.valor_mensal?.toString() || "",
       mods: [{ nome_mod: "", discord: "", loja_steam: "", valor_mensal: "" }],
     },
   });
@@ -56,18 +63,42 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
         return;
       }
 
-      // Insert servidor
-      const { data: servidor, error: serverError } = await supabase
-        .from("servidores")
-        .insert({
-          nome: data.nome,
-          host: data.host,
-          valor_mensal: valorMensal,
-        })
-        .select()
-        .single();
+      let servidorId: string;
 
-      if (serverError) throw serverError;
+      if (servidor) {
+        // Update servidor
+        const { error: serverError } = await supabase
+          .from("servidores")
+          .update({
+            nome: data.nome,
+            host: data.host,
+            valor_mensal: valorMensal,
+          })
+          .eq("id", servidor.id);
+
+        if (serverError) throw serverError;
+        servidorId = servidor.id;
+
+        // Delete existing mods
+        await supabase
+          .from("servidores_mods")
+          .delete()
+          .eq("servidor_id", servidor.id);
+      } else {
+        // Insert servidor
+        const { data: novoServidor, error: serverError } = await supabase
+          .from("servidores")
+          .insert({
+            nome: data.nome,
+            host: data.host,
+            valor_mensal: valorMensal,
+          })
+          .select()
+          .single();
+
+        if (serverError) throw serverError;
+        servidorId = novoServidor.id;
+      }
 
       // Insert mods
       if (data.mods.length > 0) {
@@ -86,7 +117,7 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
         }
 
         const modsToInsert = data.mods.map((mod) => ({
-          servidor_id: servidor.id,
+          servidor_id: servidorId,
           nome_mod: mod.nome_mod,
           discord: mod.discord || null,
           loja_steam: mod.loja_steam || null,
@@ -101,8 +132,8 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
       }
 
       toast({
-        title: "Servidor cadastrado",
-        description: "O servidor foi cadastrado com sucesso!",
+        title: servidor ? "Servidor atualizado" : "Servidor cadastrado",
+        description: servidor ? "O servidor foi atualizado com sucesso!" : "O servidor foi cadastrado com sucesso!",
       });
 
       reset();
@@ -284,7 +315,7 @@ export const ServerForm = ({ onSuccess }: { onSuccess: () => void }) => {
           disabled={isSubmitting}
           className="bg-red-900 hover:bg-red-800 text-white"
         >
-          {isSubmitting ? "Cadastrando..." : "Cadastrar Servidor"}
+          {isSubmitting ? (servidor ? "Atualizando..." : "Cadastrando...") : (servidor ? "Atualizar Servidor" : "Cadastrar Servidor")}
         </Button>
       </div>
     </form>

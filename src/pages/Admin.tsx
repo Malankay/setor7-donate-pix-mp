@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Pencil } from "lucide-react";
 import { Plus } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
@@ -56,6 +56,8 @@ const Admin = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [selectedServidor, setSelectedServidor] = useState<Servidor | null>(null);
+  const [editingServidor, setEditingServidor] = useState<Servidor | null>(null);
+  const [showEditServerDialog, setShowEditServerDialog] = useState(false);
   const [servidorMods, setServidorMods] = useState<ServidorMod[]>([]);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -138,6 +140,11 @@ const Admin = () => {
         variant: "destructive"
       });
     }
+  };
+  
+  const handleEditServidor = (servidor: Servidor) => {
+    setEditingServidor(servidor);
+    setShowEditServerDialog(true);
   };
   const fetchUsers = async () => {
     try {
@@ -526,9 +533,15 @@ const Admin = () => {
                                 <TableCell>{servidor.host}</TableCell>
                                 <TableCell className="text-accent font-semibold">{formatCurrency(servidor.valor_mensal)}</TableCell>
                                 <TableCell>
-                                  <Button variant="ghost" size="sm" onClick={() => handleViewServidor(servidor)} className="text-white hover:text-white hover:bg-accent/10">
-                                    Ver Detalhes
-                                  </Button>
+                                  <div className="flex gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => handleEditServidor(servidor)} className="text-white hover:text-white hover:bg-accent/10">
+                                      <Pencil className="h-4 w-4 mr-1" />
+                                      Editar
+                                    </Button>
+                                    <Button variant="ghost" size="sm" onClick={() => handleViewServidor(servidor)} className="text-white hover:text-white hover:bg-accent/10">
+                                      Ver Detalhes
+                                    </Button>
+                                  </div>
                                 </TableCell>
                               </TableRow>)}
                           </TableBody>
@@ -664,6 +677,26 @@ const Admin = () => {
             });
             fetchServidores();
             setShowAddServerDialog(false);
+          }} />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showEditServerDialog} onOpenChange={setShowEditServerDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Editar Servidor</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do servidor e seus MODs
+              </DialogDescription>
+            </DialogHeader>
+            <ServerForm servidor={editingServidor} onSuccess={() => {
+            toast({
+              title: "Sucesso",
+              description: "Servidor atualizado com sucesso!"
+            });
+            fetchServidores();
+            setShowEditServerDialog(false);
+            setEditingServidor(null);
           }} />
           </DialogContent>
         </Dialog>
