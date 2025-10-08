@@ -36,11 +36,32 @@ interface UserProfile {
   created_at: string;
 }
 
+
+interface Servidor {
+  id: string;
+  nome: string;
+  host: string;
+  valor_mensal: number;
+  created_at: string;
+}
+
+interface ServidorMod {
+  id: string;
+  servidor_id: string;
+  nome_mod: string;
+  discord: string | null;
+  loja_steam: string | null;
+  valor_mensal: number;
+}
+
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [servidores, setServidores] = useState<Servidor[]>([]);
+  const [selectedServidor, setSelectedServidor] = useState<Servidor | null>(null);
+  const [servidorMods, setServidorMods] = useState<ServidorMod[]>([]);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -82,8 +103,49 @@ const Admin = () => {
     if (user) {
       fetchDonations();
       fetchUsers();
+      fetchServidores();
     }
   }, [user]);
+
+  const fetchServidores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("servidores")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      setServidores(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar servidores",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewServidor = async (servidor: Servidor) => {
+    setSelectedServidor(servidor);
+    
+    try {
+      const { data, error } = await supabase
+        .from("servidores_mods")
+        .select("*")
+        .eq("servidor_id", servidor.id);
+
+      if (error) throw error;
+
+      setServidorMods(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar MODs",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -501,18 +563,63 @@ const Admin = () => {
 
                 <TabsContent value="servers">
                   <CardHeader>
-                    <CardTitle className="text-2xl">Cadastro de Servidor</CardTitle>
+                    <CardTitle className="text-2xl">Servidores Cadastrados</CardTitle>
                     <CardDescription>
-                      Cadastre um novo servidor com seus MODs
+                      Total de {servidores.length} servidor(es) cadastrado(s)
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ServerForm onSuccess={() => {
-                      toast({
-                        title: "Sucesso",
-                        description: "Servidor cadastrado com sucesso!",
-                      });
-                    }} />
+                    {servidores.length > 0 && (
+                      <div className="mb-6 rounded-md border border-border/50">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nome do Servidor</TableHead>
+                              <TableHead>Host</TableHead>
+                              <TableHead>Valor Mensal</TableHead>
+                              <TableHead>Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {servidores.map((servidor) => (
+                              <TableRow key={servidor.id}>
+                                <TableCell className="font-medium">{servidor.nome}</TableCell>
+                                <TableCell>{servidor.host}</TableCell>
+                                <TableCell className="text-accent font-semibold">{formatCurrency(servidor.valor_mensal)}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleViewServidor(servidor)}
+                                    className="text-white hover:text-white hover:bg-accent/10"
+                                  >
+                                    Ver Detalhes
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                    
+                    <Card className="backdrop-blur-sm bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-xl">Cadastro de Servidor</CardTitle>
+                        <CardDescription>
+                          Cadastre um novo servidor com seus MODs
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ServerForm onSuccess={() => {
+                          toast({
+                            title: "Sucesso",
+                            description: "Servidor cadastrado com sucesso!",
+                          });
+                          fetchServidores();
+                        }} />
+                      </CardContent>
+                    </Card>
                   </CardContent>
                 </TabsContent>
               </Tabs>
@@ -655,6 +762,82 @@ const Admin = () => {
                 </pre>
               </div>
             ) : null}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!selectedServidor} onOpenChange={() => setSelectedServidor(null)}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Detalhes do Servidor</DialogTitle>
+              <DialogDescription>
+                Informações completas sobre o servidor e seus MODs
+              </DialogDescription>
+            </DialogHeader>
+            {selectedServidor && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nome do Servidor</p>
+                    <p className="font-medium text-lg">{selectedServidor.nome}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Host</p>
+                    <p className="font-medium">{selectedServidor.host}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valor Mensal</p>
+                    <p className="font-medium text-lg text-accent">{formatCurrency(selectedServidor.valor_mensal)}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Data de Cadastro</p>
+                    <p className="font-medium">{formatDate(selectedServidor.created_at)}</p>
+                  </div>
+                </div>
+
+                {servidorMods.length > 0 && (
+                  <div className="pt-4 border-t border-border/50">
+                    <h3 className="text-lg font-semibold mb-4">MODs do Servidor</h3>
+                    <div className="space-y-4">
+                      {servidorMods.map((mod, index) => (
+                        <Card key={mod.id} className="backdrop-blur-sm bg-card/30 border-border/50">
+                          <CardContent className="pt-4">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-sm text-muted-foreground">Nome do MOD</p>
+                                <p className="font-medium">{mod.nome_mod}</p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground">Valor Mensal</p>
+                                <p className="font-medium text-accent">{formatCurrency(mod.valor_mensal)}</p>
+                              </div>
+                              {mod.discord && (
+                                <div>
+                                  <p className="text-sm text-muted-foreground">Discord</p>
+                                  <p className="font-medium">{mod.discord}</p>
+                                </div>
+                              )}
+                              {mod.loja_steam && (
+                                <div className="col-span-2">
+                                  <p className="text-sm text-muted-foreground">Loja Steam</p>
+                                  <a 
+                                    href={mod.loja_steam} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-accent hover:underline"
+                                  >
+                                    {mod.loja_steam}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
