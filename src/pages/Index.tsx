@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import DonationForm from "@/components/DonationForm";
 import logoSetor7 from "@/assets/logoSetor7.jpg";
