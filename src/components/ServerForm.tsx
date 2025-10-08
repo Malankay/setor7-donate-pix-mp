@@ -99,10 +99,10 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
     try {
       // Validar valor_mensal
       const valorMensal = parseFloat(data.valor_mensal);
-      if (isNaN(valorMensal) || valorMensal <= 0) {
+      if (isNaN(valorMensal) || valorMensal < 0) {
         toast({
           title: "Erro de validação",
-          description: "O valor mensal do servidor deve ser maior que zero.",
+          description: "O valor mensal do servidor deve ser maior ou igual a zero.",
           variant: "destructive",
         });
         setIsSubmitting(false);
@@ -151,10 +151,10 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
         // Validar valores dos mods
         for (let i = 0; i < data.mods.length; i++) {
           const valorModMensal = parseFloat(data.mods[i].valor_mensal);
-          if (isNaN(valorModMensal) || valorModMensal <= 0) {
+          if (isNaN(valorModMensal) || valorModMensal < 0) {
             toast({
               title: "Erro de validação",
-              description: `O valor mensal do MOD ${i + 1} deve ser maior que zero.`,
+              description: `O valor mensal do MOD ${i + 1} deve ser maior ou igual a zero.`,
               variant: "destructive",
             });
             setIsSubmitting(false);
@@ -235,8 +235,8 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
                 required: "Valor mensal é obrigatório",
                 validate: (value) => {
                   const num = parseFloat(value);
-                  if (isNaN(num) || num <= 0) {
-                    return "Valor deve ser maior que zero";
+                  if (isNaN(num) || num < 0) {
+                    return "Valor deve ser maior ou igual a zero";
                   }
                   return true;
                 }
@@ -324,8 +324,8 @@ export const ServerForm = ({ servidor, onSuccess }: { servidor?: Servidor | null
                     required: "Valor mensal é obrigatório",
                     validate: (value) => {
                       const num = parseFloat(value);
-                      if (isNaN(num) || num <= 0) {
-                        return "Valor deve ser maior que zero";
+                      if (isNaN(num) || num < 0) {
+                        return "Valor deve ser maior ou igual a zero";
                       }
                       return true;
                     }
