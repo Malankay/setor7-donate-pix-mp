@@ -64,6 +64,7 @@ const Admin = () => {
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showCostBreakdown, setShowCostBreakdown] = useState(false);
+  const [showPendingDonations, setShowPendingDonations] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
@@ -651,7 +652,10 @@ const Admin = () => {
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-card/50">
+                      <Card 
+                        className="bg-card/50 cursor-pointer hover:bg-card/70 transition-colors"
+                        onClick={() => setShowPendingDonations(true)}
+                      >
                         <CardHeader>
                           <CardTitle className="text-sm font-medium text-muted-foreground">
                             Doações Pendentes
@@ -661,6 +665,7 @@ const Admin = () => {
                           <div className="text-2xl font-bold text-accent">
                             {donations.filter(d => d.status === 'pending').length}
                           </div>
+                          <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
                       </Card>
 
@@ -927,6 +932,97 @@ const Admin = () => {
             setShowEditServerDialog(false);
             setEditingServidor(null);
           }} />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showPendingDonations} onOpenChange={setShowPendingDonations}>
+          <DialogContent className="max-w-5xl max-h-[80vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Doações Pendentes</DialogTitle>
+              <DialogDescription>
+                Lista de todas as doações aguardando confirmação de pagamento
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {donations.filter(d => d.status === 'pending').length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhuma doação pendente no momento
+                </p>
+              ) : (
+                <div className="rounded-md border border-border/50">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {donations
+                        .filter(d => d.status === 'pending')
+                        .map(donation => (
+                          <TableRow key={donation.id}>
+                            <TableCell className="text-sm">
+                              {formatDate(donation.created_at)}
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {donation.name}
+                            </TableCell>
+                            <TableCell>{donation.email}</TableCell>
+                            <TableCell>{donation.phone || "-"}</TableCell>
+                            <TableCell className="text-accent font-semibold">
+                              {formatCurrency(donation.amount)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedDonation(donation);
+                                    setShowPendingDonations(false);
+                                  }}
+                                  className="text-white hover:text-white hover:bg-accent/10"
+                                >
+                                  Ver Detalhes
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleCancelDonation(donation.payment_id, donation.id)}
+                                  disabled={cancellingDonation === donation.id}
+                                  className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+                                >
+                                  {cancellingDonation === donation.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <X className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+              
+              <div className="border-t border-border/50 pt-4 flex justify-between items-center">
+                <span className="text-lg font-semibold">Total Pendente</span>
+                <span className="text-xl font-bold text-accent">
+                  {formatCurrency(
+                    donations
+                      .filter(d => d.status === 'pending')
+                      .reduce((sum, d) => sum + d.amount, 0)
+                  )}
+                </span>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
