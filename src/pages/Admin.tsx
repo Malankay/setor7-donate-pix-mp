@@ -63,6 +63,7 @@ const Admin = () => {
   const [allServidorMods, setAllServidorMods] = useState<ServidorMod[]>([]);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [showCostBreakdown, setShowCostBreakdown] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
@@ -697,7 +698,10 @@ const Admin = () => {
                         </CardContent>
                       </Card>
 
-                      <Card className="bg-card/50">
+                      <Card 
+                        className="bg-card/50 cursor-pointer hover:bg-card/70 transition-colors"
+                        onClick={() => setShowCostBreakdown(true)}
+                      >
                         <CardHeader>
                           <CardTitle className="text-sm font-medium text-muted-foreground">
                             Custo Mensal Servidores
@@ -710,6 +714,7 @@ const Admin = () => {
                               allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)
                             )}
                           </div>
+                          <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
                       </Card>
                     </div>
@@ -922,6 +927,79 @@ const Admin = () => {
             setShowEditServerDialog(false);
             setEditingServidor(null);
           }} />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showCostBreakdown} onOpenChange={setShowCostBreakdown}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Discriminação de Custos Mensais</DialogTitle>
+              <DialogDescription>
+                Detalhamento dos custos de servidores e MODs
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6">
+              {servidores.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  Nenhum servidor cadastrado
+                </p>
+              ) : (
+                servidores.map((servidor) => {
+                  const mods = allServidorMods.filter(m => m.servidor_id === servidor.id);
+                  const totalMods = mods.reduce((sum, m) => sum + m.valor_mensal, 0);
+                  const totalServidor = servidor.valor_mensal + totalMods;
+
+                  return (
+                    <div key={servidor.id} className="border border-border/50 rounded-lg p-4 space-y-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="text-lg font-semibold">{servidor.nome}</h3>
+                          <p className="text-sm text-muted-foreground">{servidor.host}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Total do Servidor</p>
+                          <p className="text-xl font-bold text-accent">{formatCurrency(totalServidor)}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center py-2 border-b border-border/30">
+                          <span className="font-medium">Hospedagem Base</span>
+                          <span className="text-accent font-semibold">{formatCurrency(servidor.valor_mensal)}</span>
+                        </div>
+
+                        {mods.length > 0 && (
+                          <>
+                            <p className="text-sm font-medium text-muted-foreground pt-2">MODs:</p>
+                            {mods.map((mod) => (
+                              <div key={mod.id} className="flex justify-between items-center py-2 pl-4 border-b border-border/20">
+                                <div>
+                                  <span className="text-sm">{mod.nome_mod}</span>
+                                  {mod.discord && (
+                                    <p className="text-xs text-muted-foreground">Discord: {mod.discord}</p>
+                                  )}
+                                </div>
+                                <span className="text-accent font-semibold">{formatCurrency(mod.valor_mensal)}</span>
+                              </div>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+
+              <div className="border-t-2 border-border pt-4 flex justify-between items-center">
+                <span className="text-xl font-bold">Total Geral</span>
+                <span className="text-2xl font-bold text-red-500">
+                  {formatCurrency(
+                    servidores.reduce((sum, s) => sum + s.valor_mensal, 0) +
+                    allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)
+                  )}
+                </span>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
