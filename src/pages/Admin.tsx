@@ -413,10 +413,11 @@ const Admin = () => {
             <Card className="backdrop-blur-sm bg-card/50 border-border/50">
               <Tabs defaultValue="donations" className="w-full">
                 <CardHeader>
-                  <TabsList className="grid w-full grid-cols-3">
+                  <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="donations">Doações</TabsTrigger>
                     <TabsTrigger value="users">Usuários</TabsTrigger>
                     <TabsTrigger value="servers">Servidores</TabsTrigger>
+                    <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
                   </TabsList>
                 </CardHeader>
 
@@ -592,6 +593,106 @@ const Admin = () => {
                       </div> : <div className="text-center py-8 text-muted-foreground">
                         Nenhum servidor cadastrado ainda. Clique em "Cadastrar Servidor" para adicionar o primeiro.
                       </div>}
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="financeiro">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Resumo Financeiro</CardTitle>
+                    <CardDescription>
+                      Visão geral das finanças
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Total de Doações
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-foreground">
+                            {donations.length}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Doações Aprovadas
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-green-500">
+                            {donations.filter(d => d.status === 'approved').length}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Doações Pendentes
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-accent">
+                            {donations.filter(d => d.status === 'pending').length}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Valor Total Recebido
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-accent">
+                            {formatCurrency(
+                              donations
+                                .filter(d => d.status === 'approved')
+                                .reduce((sum, d) => sum + d.amount, 0)
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Valor Pendente
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-muted-foreground">
+                            {formatCurrency(
+                              donations
+                                .filter(d => d.status === 'pending')
+                                .reduce((sum, d) => sum + d.amount, 0)
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Custo Mensal Servidores
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-red-500">
+                            {formatCurrency(
+                              servidores.reduce((sum, s) => sum + s.valor_mensal, 0)
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
                   </CardContent>
                 </TabsContent>
               </Tabs>
