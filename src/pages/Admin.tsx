@@ -723,6 +723,30 @@ const Admin = () => {
                         </CardContent>
                       </Card>
                     </div>
+
+                    <div className="mt-6 p-6 bg-card/50 border-2 border-accent/50 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-lg font-medium text-muted-foreground">Saldo Total</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Valor Total Recebido - Custo Mensal Servidores
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-3xl font-bold ${
+                            (donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) - 
+                            (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))) >= 0
+                            ? 'text-green-500'
+                            : 'text-red-500'
+                          }`}>
+                            {formatCurrency(
+                              donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) -
+                              (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </CardContent>
                 </TabsContent>
               </Tabs>
