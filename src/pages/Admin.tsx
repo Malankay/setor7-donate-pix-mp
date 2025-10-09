@@ -34,6 +34,13 @@ interface UserProfile {
   full_name: string | null;
   created_at: string;
 }
+
+interface UserRole {
+  id: string;
+  user_id: string;
+  role: 'admin' | 'user';
+  created_at: string;
+}
 interface Servidor {
   id: string;
   nome: string;
@@ -54,6 +61,7 @@ const Admin = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [selectedServidor, setSelectedServidor] = useState<Servidor | null>(null);
   const [editingServidor, setEditingServidor] = useState<Servidor | null>(null);
@@ -108,6 +116,7 @@ const Admin = () => {
     if (user) {
       fetchDonations();
       fetchUsers();
+      fetchUserRoles();
       fetchServidores();
       fetchAllServidorMods();
     }
@@ -216,6 +225,62 @@ const Admin = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar usuários",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchUserRoles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("*");
+      
+      if (error) throw error;
+      setUserRoles(data || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar roles:", error);
+    }
+  };
+
+  const getUserRole = (userId: string): string => {
+    const role = userRoles.find(r => r.user_id === userId);
+    return role?.role || 'user';
+  };
+
+  const toggleUserRole = async (userId: string) => {
+    try {
+      const currentRole = getUserRole(userId);
+      const newRole = currentRole === 'admin' ? 'user' : 'admin';
+
+      if (currentRole === 'admin') {
+        // Remove admin role
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", userId)
+          .eq("role", "admin");
+
+        if (error) throw error;
+      } else {
+        // Add admin role
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: newRole });
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Role atualizada",
+        description: `Usuário agora é ${newRole === 'admin' ? 'administrador' : 'usuário comum'}.`
+      });
+
+      fetchUserRoles();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar role",
         description: error.message,
         variant: "destructive"
       });
@@ -554,13 +619,14 @@ const Admin = () => {
                           <TableRow>
                             <TableHead>Nome</TableHead>
                             <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
                             <TableHead>Data de Cadastro</TableHead>
                             <TableHead>Ações</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {users.length === 0 ? <TableRow>
-                              <TableCell colSpan={4} className="text-center text-muted-foreground">
+                              <TableCell colSpan={5} className="text-center text-muted-foreground">
                                 Nenhum usuário encontrado
                               </TableCell>
                             </TableRow> : users.map(userProfile => <TableRow key={userProfile.id}>
@@ -568,6 +634,16 @@ const Admin = () => {
                                   {userProfile.full_name || "-"}
                                 </TableCell>
                                 <TableCell>{userProfile.email}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant={getUserRole(userProfile.id) === 'admin' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => toggleUserRole(userProfile.id)}
+                                    className={getUserRole(userProfile.id) === 'admin' ? 'bg-red-900 hover:bg-red-800' : ''}
+                                  >
+                                    {getUserRole(userProfile.id) === 'admin' ? 'Admin' : 'Usuário'}
+                                  </Button>
+                                </TableCell>
                                 <TableCell>{formatDate(userProfile.created_at)}</TableCell>
                                 <TableCell>
                                   <div className="flex gap-2">
