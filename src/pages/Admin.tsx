@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Pencil, Mail } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Pencil, Mail, ChevronLeft, ChevronRight } from "lucide-react";
 import { Plus } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
@@ -65,6 +65,7 @@ const Admin = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showCostBreakdown, setShowCostBreakdown] = useState(false);
   const [showPendingDonations, setShowPendingDonations] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
@@ -283,6 +284,33 @@ const Admin = () => {
       hour: "2-digit",
       minute: "2-digit"
     }).format(new Date(date));
+  };
+
+  const formatMonthYear = (date: Date) => {
+    return new Intl.DateTimeFormat("pt-BR", {
+      month: "long",
+      year: "numeric"
+    }).format(date);
+  };
+
+  const filterDonationsByMonth = (donations: Donation[], month: Date) => {
+    return donations.filter(donation => {
+      const donationDate = new Date(donation.created_at);
+      return donationDate.getMonth() === month.getMonth() && 
+             donationDate.getFullYear() === month.getFullYear();
+    });
+  };
+
+  const changeMonth = (direction: 'prev' | 'next') => {
+    setSelectedMonth(prev => {
+      const newDate = new Date(prev);
+      if (direction === 'prev') {
+        newDate.setMonth(newDate.getMonth() - 1);
+      } else {
+        newDate.setMonth(newDate.getMonth() + 1);
+      }
+      return newDate;
+    });
   };
   const getStatusColor = (status: string) => {
     if (status === 'approved') {
@@ -619,13 +647,50 @@ const Admin = () => {
 
                 <TabsContent value="financeiro">
                   <CardHeader>
-                    <CardTitle className="text-2xl">Resumo Financeiro</CardTitle>
-                    <CardDescription>
-                      Visão geral das finanças
-                    </CardDescription>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Resumo Financeiro</CardTitle>
+                        <CardDescription>
+                          Visão geral das finanças por mês
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => changeMonth('prev')}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <div className="text-lg font-semibold min-w-[200px] text-center capitalize">
+                          {formatMonthYear(selectedMonth)}
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => changeMonth('next')}
+                          disabled={selectedMonth.getMonth() === new Date().getMonth() && 
+                                   selectedMonth.getFullYear() === new Date().getFullYear()}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {(() => {
+                      const monthDonations = filterDonationsByMonth(donations, selectedMonth);
+                      const approvedDonations = monthDonations.filter(d => d.status === 'approved');
+                      const pendingDonations = monthDonations.filter(d => d.status === 'pending');
+                      const totalReceived = approvedDonations.reduce((sum, d) => sum + d.amount, 0);
+                      const totalPending = pendingDonations.reduce((sum, d) => sum + d.amount, 0);
+                      const totalCost = servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + 
+                                       allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0);
+                      const balance = totalReceived - totalCost;
+
+                      return (
+                        <>
+                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       <Card className="bg-card/50">
                         <CardHeader>
                           <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -634,7 +699,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-foreground">
-                            {donations.length}
+                            {monthDonations.length}
                           </div>
                         </CardContent>
                       </Card>
@@ -647,7 +712,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-green-500">
-                            {donations.filter(d => d.status === 'approved').length}
+                            {approvedDonations.length}
                           </div>
                         </CardContent>
                       </Card>
@@ -663,7 +728,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-accent">
-                            {donations.filter(d => d.status === 'pending').length}
+                            {pendingDonations.length}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
@@ -677,11 +742,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-green-500">
-                            {formatCurrency(
-                              donations
-                                .filter(d => d.status === 'approved')
-                                .reduce((sum, d) => sum + d.amount, 0)
-                            )}
+                            {formatCurrency(totalReceived)}
                           </div>
                         </CardContent>
                       </Card>
@@ -694,11 +755,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-red-800">
-                            {formatCurrency(
-                              donations
-                                .filter(d => d.status === 'pending')
-                                .reduce((sum, d) => sum + d.amount, 0)
-                            )}
+                            {formatCurrency(totalPending)}
                           </div>
                         </CardContent>
                       </Card>
@@ -714,10 +771,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-red-500">
-                            {formatCurrency(
-                              servidores.reduce((sum, s) => sum + s.valor_mensal, 0) +
-                              allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)
-                            )}
+                            {formatCurrency(totalCost)}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
@@ -727,28 +781,23 @@ const Admin = () => {
                     <div className="mt-6 p-6 bg-card/50 border-2 border-accent/50 rounded-lg">
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-lg font-medium text-muted-foreground">Saldo Total</p>
+                          <p className="text-lg font-medium text-muted-foreground">Saldo do Mês</p>
                           <p className="text-sm text-muted-foreground mt-1">
                             Valor Total Recebido - Custo Mensal Servidores
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className={`text-3xl font-bold ${
-                            (donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) - 
-                            (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))) >= 0
-                            ? 'text-green-500'
-                            : 'text-red-500'
-                          }`}>
-                            {formatCurrency(
-                              donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) -
-                              (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))
-                            )}
+                          <div className={`text-3xl font-bold ${balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {formatCurrency(balance)}
                           </div>
                         </div>
                       </div>
                     </div>
-                  </CardContent>
-                </TabsContent>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </TabsContent>
               </Tabs>
             </Card>
           </div>
