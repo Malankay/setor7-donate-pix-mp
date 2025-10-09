@@ -693,7 +693,7 @@ const Admin = () => {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-2xl font-bold text-muted-foreground">
+                          <div className="text-2xl font-bold text-red-800">
                             {formatCurrency(
                               donations
                                 .filter(d => d.status === 'pending')
