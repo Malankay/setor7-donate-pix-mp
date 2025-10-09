@@ -524,7 +524,8 @@ const Admin = () => {
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>;
   }
-  return <div className="min-h-screen bg-darker-bg">
+  return (
+    <div className="min-h-screen bg-darker-bg">
       {/* Animated background */}
       <div className="fixed inset-0 bg-gradient-hero opacity-50 pointer-events-none" />
       <div className="fixed inset-0 bg-gradient-glow opacity-20 pointer-events-none animate-pulse" />
@@ -1340,6 +1341,8 @@ const Admin = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Admin;
