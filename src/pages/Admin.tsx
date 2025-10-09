@@ -60,6 +60,7 @@ const Admin = () => {
   const [showEditServerDialog, setShowEditServerDialog] = useState(false);
   const [servidorToDelete, setServidorToDelete] = useState<string | null>(null);
   const [servidorMods, setServidorMods] = useState<ServidorMod[]>([]);
+  const [allServidorMods, setAllServidorMods] = useState<ServidorMod[]>([]);
   const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -105,8 +106,26 @@ const Admin = () => {
       fetchDonations();
       fetchUsers();
       fetchServidores();
+      fetchAllServidorMods();
     }
   }, [user]);
+
+  const fetchAllServidorMods = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("servidores_mods")
+        .select("*");
+      
+      if (error) throw error;
+      setAllServidorMods(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar MODs",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
   const fetchServidores = async () => {
     try {
       const {
@@ -687,7 +706,8 @@ const Admin = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-red-500">
                             {formatCurrency(
-                              servidores.reduce((sum, s) => sum + s.valor_mensal, 0)
+                              servidores.reduce((sum, s) => sum + s.valor_mensal, 0) +
+                              allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)
                             )}
                           </div>
                         </CardContent>
