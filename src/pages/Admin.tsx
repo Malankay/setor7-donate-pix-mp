@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Pencil, Mail, ChevronLeft, ChevronRight } from "lucide-react";
+import { LogOut, Loader2, UserPlus, Edit, Trash2, Copy, X, Pencil, Mail } from "lucide-react";
 import { Plus } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
@@ -34,13 +34,6 @@ interface UserProfile {
   full_name: string | null;
   created_at: string;
 }
-
-interface UserRole {
-  id: string;
-  user_id: string;
-  role: 'admin' | 'user';
-  created_at: string;
-}
 interface Servidor {
   id: string;
   nome: string;
@@ -59,10 +52,8 @@ interface ServidorMod {
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [userRoles, setUserRoles] = useState<UserRole[]>([]);
   const [servidores, setServidores] = useState<Servidor[]>([]);
   const [selectedServidor, setSelectedServidor] = useState<Servidor | null>(null);
   const [editingServidor, setEditingServidor] = useState<Servidor | null>(null);
@@ -74,7 +65,6 @@ const Admin = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [showCostBreakdown, setShowCostBreakdown] = useState(false);
   const [showPendingDonations, setShowPendingDonations] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
@@ -113,36 +103,14 @@ const Admin = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
-  // Check if current user is admin (via RPC)
-  const checkAdmin = async () => {
-    try {
-      if (!user) return;
-      const { data, error } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin'
-      });
-      if (error) throw error;
-      setIsAdmin(Boolean(data));
-    } catch (e) {
-      setIsAdmin(false);
-    }
-  };
-
   useEffect(() => {
     if (user) {
-      checkAdmin();
       fetchDonations();
       fetchUsers();
       fetchServidores();
       fetchAllServidorMods();
     }
   }, [user]);
-
-  useEffect(() => {
-    if (user && isAdmin) {
-      fetchUserRoles();
-    }
-  }, [user, isAdmin]);
 
   const fetchAllServidorMods = async () => {
     try {
@@ -252,71 +220,6 @@ const Admin = () => {
       });
     }
   };
-
-  const fetchUserRoles = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("*");
-      
-      if (error) throw error;
-      setUserRoles(data || []);
-    } catch (error: any) {
-      console.error("Erro ao carregar roles:", error);
-    }
-  };
-
-  const getUserRole = (userId: string): string => {
-    const role = userRoles.find(r => r.user_id === userId);
-    return role?.role || 'user';
-  };
-
-  const toggleUserRole = async (userId: string) => {
-    if (!isAdmin) {
-      toast({
-        title: "Permissão negada",
-        description: "Apenas administradores podem alterar roles.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      const currentRole = getUserRole(userId);
-      const newRole = currentRole === 'admin' ? 'user' : 'admin';
-
-      if (currentRole === 'admin') {
-        // Remove admin role
-        const { error } = await supabase
-          .from("user_roles")
-          .delete()
-          .eq("user_id", userId)
-          .eq("role", "admin");
-
-        if (error) throw error;
-      } else {
-        // Add admin role
-        const { error } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: newRole });
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: "Role atualizada",
-        description: `Usuário agora é ${newRole === 'admin' ? 'administrador' : 'usuário comum'}.`
-      });
-
-      fetchUserRoles();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar role",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  };
-
   const fetchDonations = async () => {
     try {
       setLoading(true);
@@ -338,6 +241,7 @@ const Admin = () => {
       setLoading(false);
     }
   };
+  const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
@@ -379,33 +283,6 @@ const Admin = () => {
       hour: "2-digit",
       minute: "2-digit"
     }).format(new Date(date));
-  };
-
-  const formatMonthYear = (date: Date) => {
-    return new Intl.DateTimeFormat("pt-BR", {
-      month: "long",
-      year: "numeric"
-    }).format(date);
-  };
-
-  const filterDonationsByMonth = (donations: Donation[], month: Date) => {
-    return donations.filter(donation => {
-      const donationDate = new Date(donation.created_at);
-      return donationDate.getMonth() === month.getMonth() && 
-             donationDate.getFullYear() === month.getFullYear();
-    });
-  };
-
-  const changeMonth = (direction: 'prev' | 'next') => {
-    setSelectedMonth(prev => {
-      const newDate = new Date(prev);
-      if (direction === 'prev') {
-        newDate.setMonth(newDate.getMonth() - 1);
-      } else {
-        newDate.setMonth(newDate.getMonth() + 1);
-      }
-      return newDate;
-    });
   };
   const getStatusColor = (status: string) => {
     if (status === 'approved') {
@@ -524,8 +401,7 @@ const Admin = () => {
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>;
   }
-  return (
-    <div className="min-h-screen bg-darker-bg">
+  return <div className="min-h-screen bg-darker-bg">
       {/* Animated background */}
       <div className="fixed inset-0 bg-gradient-hero opacity-50 pointer-events-none" />
       <div className="fixed inset-0 bg-gradient-glow opacity-20 pointer-events-none animate-pulse" />
@@ -650,14 +526,13 @@ const Admin = () => {
                           <TableRow>
                             <TableHead>Nome</TableHead>
                             <TableHead>Email</TableHead>
-                            <TableHead>Role</TableHead>
                             <TableHead>Data de Cadastro</TableHead>
                             <TableHead>Ações</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {users.length === 0 ? <TableRow>
-                              <TableCell colSpan={5} className="text-center text-muted-foreground">
+                              <TableCell colSpan={4} className="text-center text-muted-foreground">
                                 Nenhum usuário encontrado
                               </TableCell>
                             </TableRow> : users.map(userProfile => <TableRow key={userProfile.id}>
@@ -665,17 +540,6 @@ const Admin = () => {
                                   {userProfile.full_name || "-"}
                                 </TableCell>
                                 <TableCell>{userProfile.email}</TableCell>
-                                <TableCell>
-                                  <Button
-                                    variant={getUserRole(userProfile.id) === 'admin' ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => toggleUserRole(userProfile.id)}
-                                    disabled={!isAdmin}
-                                    className={getUserRole(userProfile.id) === 'admin' ? 'bg-red-900 hover:bg-red-800' : ''}
-                                  >
-                                    {getUserRole(userProfile.id) === 'admin' ? 'Admin' : 'Usuário'}
-                                  </Button>
-                                </TableCell>
                                 <TableCell>{formatDate(userProfile.created_at)}</TableCell>
                                 <TableCell>
                                   <div className="flex gap-2">
@@ -755,50 +619,13 @@ const Admin = () => {
 
                 <TabsContent value="financeiro">
                   <CardHeader>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <CardTitle className="text-2xl">Resumo Financeiro</CardTitle>
-                        <CardDescription>
-                          Visão geral das finanças por mês
-                        </CardDescription>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => changeMonth('prev')}
-                        >
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <div className="text-lg font-semibold min-w-[200px] text-center capitalize">
-                          {formatMonthYear(selectedMonth)}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => changeMonth('next')}
-                          disabled={selectedMonth.getMonth() === new Date().getMonth() && 
-                                   selectedMonth.getFullYear() === new Date().getFullYear()}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
+                    <CardTitle className="text-2xl">Resumo Financeiro</CardTitle>
+                    <CardDescription>
+                      Visão geral das finanças
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {(() => {
-                      const monthDonations = filterDonationsByMonth(donations, selectedMonth);
-                      const approvedDonations = monthDonations.filter(d => d.status === 'approved');
-                      const pendingDonations = monthDonations.filter(d => d.status === 'pending');
-                      const totalReceived = approvedDonations.reduce((sum, d) => sum + d.amount, 0);
-                      const totalPending = pendingDonations.reduce((sum, d) => sum + d.amount, 0);
-                      const totalCost = servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + 
-                                       allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0);
-                      const balance = totalReceived - totalCost;
-
-                      return (
-                        <>
-                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                       <Card className="bg-card/50">
                         <CardHeader>
                           <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -807,7 +634,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-foreground">
-                            {monthDonations.length}
+                            {donations.length}
                           </div>
                         </CardContent>
                       </Card>
@@ -820,7 +647,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-green-500">
-                            {approvedDonations.length}
+                            {donations.filter(d => d.status === 'approved').length}
                           </div>
                         </CardContent>
                       </Card>
@@ -836,7 +663,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-accent">
-                            {pendingDonations.length}
+                            {donations.filter(d => d.status === 'pending').length}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
@@ -850,7 +677,11 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-green-500">
-                            {formatCurrency(totalReceived)}
+                            {formatCurrency(
+                              donations
+                                .filter(d => d.status === 'approved')
+                                .reduce((sum, d) => sum + d.amount, 0)
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -863,7 +694,11 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-red-800">
-                            {formatCurrency(totalPending)}
+                            {formatCurrency(
+                              donations
+                                .filter(d => d.status === 'pending')
+                                .reduce((sum, d) => sum + d.amount, 0)
+                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -879,7 +714,10 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-red-500">
-                            {formatCurrency(totalCost)}
+                            {formatCurrency(
+                              servidores.reduce((sum, s) => sum + s.valor_mensal, 0) +
+                              allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)
+                            )}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
@@ -889,23 +727,28 @@ const Admin = () => {
                     <div className="mt-6 p-6 bg-card/50 border-2 border-accent/50 rounded-lg">
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-lg font-medium text-muted-foreground">Saldo do Mês</p>
+                          <p className="text-lg font-medium text-muted-foreground">Saldo Total</p>
                           <p className="text-sm text-muted-foreground mt-1">
                             Valor Total Recebido - Custo Mensal Servidores
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className={`text-3xl font-bold ${balance >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {formatCurrency(balance)}
+                          <div className={`text-3xl font-bold ${
+                            (donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) - 
+                            (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))) >= 0
+                            ? 'text-green-500'
+                            : 'text-red-500'
+                          }`}>
+                            {formatCurrency(
+                              donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) -
+                              (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))
+                            )}
                           </div>
                         </div>
                       </div>
                     </div>
-                  </>
-                );
-              })()}
-            </CardContent>
-          </TabsContent>
+                  </CardContent>
+                </TabsContent>
               </Tabs>
             </Card>
           </div>
@@ -1341,8 +1184,6 @@ const Admin = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Admin;
