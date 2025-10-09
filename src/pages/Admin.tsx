@@ -59,6 +59,7 @@ interface ServidorMod {
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [userRoles, setUserRoles] = useState<UserRole[]>([]);
@@ -112,15 +113,36 @@ const Admin = () => {
     });
     return () => subscription.unsubscribe();
   }, [navigate]);
+  // Check if current user is admin (via RPC)
+  const checkAdmin = async () => {
+    try {
+      if (!user) return;
+      const { data, error } = await supabase.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+      if (error) throw error;
+      setIsAdmin(Boolean(data));
+    } catch (e) {
+      setIsAdmin(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
+      checkAdmin();
       fetchDonations();
       fetchUsers();
-      fetchUserRoles();
       fetchServidores();
       fetchAllServidorMods();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && isAdmin) {
+      fetchUserRoles();
+    }
+  }, [user, isAdmin]);
 
   const fetchAllServidorMods = async () => {
     try {
@@ -250,6 +272,14 @@ const Admin = () => {
   };
 
   const toggleUserRole = async (userId: string) => {
+    if (!isAdmin) {
+      toast({
+        title: "Permissão negada",
+        description: "Apenas administradores podem alterar roles.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       const currentRole = getUserRole(userId);
       const newRole = currentRole === 'admin' ? 'user' : 'admin';
@@ -286,6 +316,7 @@ const Admin = () => {
       });
     }
   };
+
   const fetchDonations = async () => {
     try {
       setLoading(true);
@@ -307,7 +338,6 @@ const Admin = () => {
       setLoading(false);
     }
   };
-  const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
@@ -639,6 +669,7 @@ const Admin = () => {
                                     variant={getUserRole(userProfile.id) === 'admin' ? 'default' : 'outline'}
                                     size="sm"
                                     onClick={() => toggleUserRole(userProfile.id)}
+                                    disabled={!isAdmin}
                                     className={getUserRole(userProfile.id) === 'admin' ? 'bg-red-900 hover:bg-red-800' : ''}
                                   >
                                     {getUserRole(userProfile.id) === 'admin' ? 'Admin' : 'Usuário'}
