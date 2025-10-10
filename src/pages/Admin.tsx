@@ -112,6 +112,17 @@ const Admin = () => {
     }
   }, [user]);
 
+  // Auto-update donation statuses every 2 minutes
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      handleUpdateAllStatuses();
+    }, 120000); // 2 minutes in milliseconds
+
+    return () => clearInterval(interval);
+  }, [user, donations]);
+
   const fetchAllServidorMods = async () => {
     try {
       const { data, error } = await supabase
