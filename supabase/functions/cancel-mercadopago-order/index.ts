@@ -22,7 +22,22 @@ serve(async (req) => {
       throw new Error('Donation ID é obrigatório');
     }
 
-    const accessToken = Deno.env.get('MERCADO_PAGO_ACCESS_TOKEN');
+    // Get Mercado Pago token from database
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const { data: secretData, error: secretError } = await supabaseClient
+      .from('app_secrets')
+      .select('value')
+      .eq('key', 'MERCADO_PAGO_ACCESS_TOKEN')
+      .single();
+    
+    if (secretError || !secretData?.value) {
+      throw new Error('Token do Mercado Pago não configurado');
+    }
+    
+    const accessToken = secretData.value;
     
     if (!accessToken) {
       throw new Error('Token de acesso do Mercado Pago não configurado');
@@ -50,12 +65,8 @@ serve(async (req) => {
     const orderData = await response.json();
     console.log('Pedido cancelado com sucesso');
 
-    // Atualizar status no banco de dados
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const { error: updateError } = await supabase
+    // Atualizar status no banco de dados usando o mesmo cliente
+    const { error: updateError } = await supabaseClient
       .from('donations')
       .update({ status: 'cancelled' })
       .eq('id', donationId);

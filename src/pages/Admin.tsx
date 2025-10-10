@@ -13,6 +13,7 @@ import { Plus } from "lucide-react";
 import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
 import { ServerForm } from "@/components/ServerForm";
+import { SecretsManager } from "@/components/SecretsManager";
 interface Donation {
   id: string;
   payment_id: string;
@@ -435,11 +436,12 @@ const Admin = () => {
             <Card className="backdrop-blur-sm bg-card/50 border-border/50">
               <Tabs defaultValue="donations" className="w-full">
                 <CardHeader>
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="donations">Doações</TabsTrigger>
                     <TabsTrigger value="users">Usuários</TabsTrigger>
                     <TabsTrigger value="servers">Servidores</TabsTrigger>
                     <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+                    <TabsTrigger value="secrets">Secrets</TabsTrigger>
                   </TabsList>
                 </CardHeader>
 
@@ -611,6 +613,10 @@ const Admin = () => {
                         Nenhum servidor cadastrado ainda. Clique em "Cadastrar Servidor" para adicionar o primeiro.
                       </div>}
                   </CardContent>
+                </TabsContent>
+
+                <TabsContent value="secrets">
+                  <SecretsManager />
                 </TabsContent>
 
                 <TabsContent value="financeiro">
