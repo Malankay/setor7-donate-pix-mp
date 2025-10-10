@@ -117,27 +117,25 @@ const Admin = () => {
   // Auto-update donation statuses every 2 minutes
   useEffect(() => {
     if (!user) return;
-
     const interval = setInterval(() => {
       handleUpdateAllStatuses();
     }, 120000); // 2 minutes in milliseconds
 
     return () => clearInterval(interval);
   }, [user, donations]);
-
   const fetchAllServidorMods = async () => {
     try {
-      const { data, error } = await supabase
-        .from("servidores_mods")
-        .select("*");
-      
+      const {
+        data,
+        error
+      } = await supabase.from("servidores_mods").select("*");
       if (error) throw error;
       setAllServidorMods(data || []);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar MODs",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -176,42 +174,34 @@ const Admin = () => {
       });
     }
   };
-  
   const handleEditServidor = (servidor: Servidor) => {
     setEditingServidor(servidor);
     setShowEditServerDialog(true);
   };
-
   const handleDeleteServidor = async (servidorId: string) => {
     try {
       // Deletar MODs do servidor primeiro
-      const { error: modsError } = await supabase
-        .from("servidores_mods")
-        .delete()
-        .eq("servidor_id", servidorId);
-
+      const {
+        error: modsError
+      } = await supabase.from("servidores_mods").delete().eq("servidor_id", servidorId);
       if (modsError) throw modsError;
 
       // Deletar servidor
-      const { error: servidorError } = await supabase
-        .from("servidores")
-        .delete()
-        .eq("id", servidorId);
-
+      const {
+        error: servidorError
+      } = await supabase.from("servidores").delete().eq("id", servidorId);
       if (servidorError) throw servidorError;
-
       toast({
         title: "Servidor deletado",
-        description: "O servidor e seus MODs foram removidos com sucesso.",
+        description: "O servidor e seus MODs foram removidos com sucesso."
       });
-
       setServidorToDelete(null);
       fetchServidores();
     } catch (error: any) {
       toast({
         title: "Erro ao deletar servidor",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
@@ -428,9 +418,7 @@ const Admin = () => {
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
                   PAINEL DE ADMINISTRAÇÃO
                 </h1>
-                <p className="text-accent font-semibold mt-1">
-                  Gerencie doações e usuários
-                </p>
+                <p className="text-accent font-semibold mt-1">Gerencie doações, usuários, servidores e o financeiro</p>
               </div>
               <Button onClick={handleSignOut} variant="outline" className="gap-2">
                 <LogOut className="h-4 w-4" />
@@ -604,12 +592,7 @@ const Admin = () => {
                                 <TableCell className="text-accent font-semibold">{formatCurrency(servidor.valor_mensal)}</TableCell>
                                 <TableCell>
                                   <div className="flex gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => setServidorToDelete(servidor.id)}
-                                      className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
-                                    >
+                                    <Button variant="ghost" size="sm" onClick={() => setServidorToDelete(servidor.id)} className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white">
                                       <X className="h-4 w-4" />
                                     </Button>
                                     <Button variant="ghost" size="sm" onClick={() => handleEditServidor(servidor)} className="text-white hover:text-white hover:bg-accent/10">
@@ -640,26 +623,22 @@ const Admin = () => {
                         </CardDescription>
                       </div>
                       <div className="flex gap-2">
-                        <select 
-                          value={selectedMonth}
-                          onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                          className="px-3 py-2 bg-card border border-border rounded-md text-sm"
-                        >
-                          {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i} value={i}>
-                              {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}
-                            </option>
-                          ))}
-                        </select>
-                        <select 
-                          value={selectedYear}
-                          onChange={(e) => setSelectedYear(Number(e.target.value))}
-                          className="px-3 py-2 bg-card border border-border rounded-md text-sm"
-                        >
-                          {Array.from({ length: 5 }, (_, i) => {
-                            const year = new Date().getFullYear() - 2 + i;
-                            return <option key={year} value={year}>{year}</option>;
+                        <select value={selectedMonth} onChange={e => setSelectedMonth(Number(e.target.value))} className="px-3 py-2 bg-card border border-border rounded-md text-sm">
+                          {Array.from({
+                          length: 12
+                        }, (_, i) => <option key={i} value={i}>
+                              {new Date(2000, i).toLocaleString('pt-BR', {
+                            month: 'long'
                           })}
+                            </option>)}
+                        </select>
+                        <select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))} className="px-3 py-2 bg-card border border-border rounded-md text-sm">
+                          {Array.from({
+                          length: 5
+                        }, (_, i) => {
+                          const year = new Date().getFullYear() - 2 + i;
+                          return <option key={year} value={year}>{year}</option>;
+                        })}
                         </select>
                       </div>
                     </div>
@@ -675,10 +654,9 @@ const Admin = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-foreground">
                             {donations.filter(d => {
-                              const donationDate = new Date(d.created_at);
-                              return donationDate.getMonth() === selectedMonth && 
-                                     donationDate.getFullYear() === selectedYear;
-                            }).length}
+                            const donationDate = new Date(d.created_at);
+                            return donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                          }).length}
                           </div>
                         </CardContent>
                       </Card>
@@ -692,19 +670,14 @@ const Admin = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-green-500">
                             {donations.filter(d => {
-                              const donationDate = new Date(d.created_at);
-                              return d.status === 'approved' && 
-                                     donationDate.getMonth() === selectedMonth && 
-                                     donationDate.getFullYear() === selectedYear;
-                            }).length}
+                            const donationDate = new Date(d.created_at);
+                            return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                          }).length}
                           </div>
                         </CardContent>
                       </Card>
 
-                      <Card 
-                        className="bg-card/50 cursor-pointer hover:bg-card/70 transition-colors"
-                        onClick={() => setShowPendingDonations(true)}
-                      >
+                      <Card className="bg-card/50 cursor-pointer hover:bg-card/70 transition-colors" onClick={() => setShowPendingDonations(true)}>
                         <CardHeader>
                           <CardTitle className="text-sm font-medium text-muted-foreground">
                             Doações Pendentes
@@ -713,11 +686,9 @@ const Admin = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-accent">
                             {donations.filter(d => {
-                              const donationDate = new Date(d.created_at);
-                              return d.status === 'pending' && 
-                                     donationDate.getMonth() === selectedMonth && 
-                                     donationDate.getFullYear() === selectedYear;
-                            }).length}
+                            const donationDate = new Date(d.created_at);
+                            return d.status === 'pending' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                          }).length}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
@@ -731,16 +702,10 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-green-500">
-                            {formatCurrency(
-                              donations
-                                .filter(d => {
-                                  const donationDate = new Date(d.created_at);
-                                  return d.status === 'approved' && 
-                                         donationDate.getMonth() === selectedMonth && 
-                                         donationDate.getFullYear() === selectedYear;
-                                })
-                                .reduce((sum, d) => sum + d.amount, 0)
-                            )}
+                            {formatCurrency(donations.filter(d => {
+                            const donationDate = new Date(d.created_at);
+                            return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                          }).reduce((sum, d) => sum + d.amount, 0))}
                           </div>
                         </CardContent>
                       </Card>
@@ -753,24 +718,15 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-red-800">
-                            {formatCurrency(
-                              donations
-                                .filter(d => {
-                                  const donationDate = new Date(d.created_at);
-                                  return d.status === 'pending' && 
-                                         donationDate.getMonth() === selectedMonth && 
-                                         donationDate.getFullYear() === selectedYear;
-                                })
-                                .reduce((sum, d) => sum + d.amount, 0)
-                            )}
+                            {formatCurrency(donations.filter(d => {
+                            const donationDate = new Date(d.created_at);
+                            return d.status === 'pending' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                          }).reduce((sum, d) => sum + d.amount, 0))}
                           </div>
                         </CardContent>
                       </Card>
 
-                      <Card 
-                        className="bg-card/50 cursor-pointer hover:bg-card/70 transition-colors"
-                        onClick={() => setShowCostBreakdown(true)}
-                      >
+                      <Card className="bg-card/50 cursor-pointer hover:bg-card/70 transition-colors" onClick={() => setShowCostBreakdown(true)}>
                         <CardHeader>
                           <CardTitle className="text-sm font-medium text-muted-foreground">
                             Custo Mensal Servidores
@@ -778,10 +734,7 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-red-500">
-                            {formatCurrency(
-                              servidores.reduce((sum, s) => sum + s.valor_mensal, 0) +
-                              allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)
-                            )}
+                            {formatCurrency(servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
@@ -797,30 +750,14 @@ const Admin = () => {
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className={`text-3xl font-bold ${
-                            (donations
-                              .filter(d => {
-                                const donationDate = new Date(d.created_at);
-                                return d.status === 'approved' && 
-                                       donationDate.getMonth() === selectedMonth && 
-                                       donationDate.getFullYear() === selectedYear;
-                              })
-                              .reduce((sum, d) => sum + d.amount, 0) - 
-                            (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))) >= 0
-                            ? 'text-green-500'
-                            : 'text-red-500'
-                          }`}>
-                            {formatCurrency(
-                              donations
-                                .filter(d => {
-                                  const donationDate = new Date(d.created_at);
-                                  return d.status === 'approved' && 
-                                         donationDate.getMonth() === selectedMonth && 
-                                         donationDate.getFullYear() === selectedYear;
-                                })
-                                .reduce((sum, d) => sum + d.amount, 0) -
-                              (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))
-                            )}
+                          <div className={`text-3xl font-bold ${donations.filter(d => {
+                          const donationDate = new Date(d.created_at);
+                          return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                        }).reduce((sum, d) => sum + d.amount, 0) - (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                            {formatCurrency(donations.filter(d => {
+                            const donationDate = new Date(d.created_at);
+                            return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                          }).reduce((sum, d) => sum + d.amount, 0) - (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)))}
                           </div>
                         </div>
                       </div>
@@ -923,51 +860,47 @@ const Admin = () => {
                     <img src={`data:image/png;base64,${selectedDonation.qr_code_base64}`} alt="QR Code PIX" className="w-64 h-64 border border-border/50 rounded-lg" />
                     {selectedDonation.qr_code && <div className="flex gap-2">
                       <Button variant="outline" size="sm" className="gap-2" onClick={() => {
-                        navigator.clipboard.writeText(selectedDonation.qr_code!);
-                        toast({
-                          title: "Código copiado!",
-                          description: "O código PIX foi copiado para a área de transferência."
-                        });
-                      }}>
+                  navigator.clipboard.writeText(selectedDonation.qr_code!);
+                  toast({
+                    title: "Código copiado!",
+                    description: "O código PIX foi copiado para a área de transferência."
+                  });
+                }}>
                         <Copy className="h-4 w-4" />
                         Copiar código PIX
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-2"
-                        onClick={async () => {
-                          try {
-                            const { data, error } = await supabase.functions.invoke('resend-donation-email', {
-                              body: {
-                                name: selectedDonation.name,
-                                email: selectedDonation.email,
-                                phone: selectedDonation.phone,
-                                steamId: selectedDonation.steam_id,
-                                amount: selectedDonation.amount,
-                                description: selectedDonation.description,
-                                qrCodeBase64: selectedDonation.qr_code_base64,
-                                qrCode: selectedDonation.qr_code,
-                                createdAt: selectedDonation.created_at
-                              }
-                            });
-
-                            if (error) throw error;
-
-                            toast({
-                              title: "Email enviado!",
-                              description: "O email com os detalhes da doação foi enviado com sucesso."
-                            });
-                          } catch (error) {
-                            console.error('Error resending email:', error);
-                            toast({
-                              title: "Erro ao enviar email",
-                              description: "Não foi possível enviar o email. Tente novamente.",
-                              variant: "destructive"
-                            });
-                          }
-                        }}
-                      >
+                      <Button variant="outline" size="sm" className="gap-2" onClick={async () => {
+                  try {
+                    const {
+                      data,
+                      error
+                    } = await supabase.functions.invoke('resend-donation-email', {
+                      body: {
+                        name: selectedDonation.name,
+                        email: selectedDonation.email,
+                        phone: selectedDonation.phone,
+                        steamId: selectedDonation.steam_id,
+                        amount: selectedDonation.amount,
+                        description: selectedDonation.description,
+                        qrCodeBase64: selectedDonation.qr_code_base64,
+                        qrCode: selectedDonation.qr_code,
+                        createdAt: selectedDonation.created_at
+                      }
+                    });
+                    if (error) throw error;
+                    toast({
+                      title: "Email enviado!",
+                      description: "O email com os detalhes da doação foi enviado com sucesso."
+                    });
+                  } catch (error) {
+                    console.error('Error resending email:', error);
+                    toast({
+                      title: "Erro ao enviar email",
+                      description: "Não foi possível enviar o email. Tente novamente.",
+                      variant: "destructive"
+                    });
+                  }
+                }}>
                         <Mail className="h-4 w-4" />
                         Reenviar Email
                       </Button>
@@ -1044,12 +977,9 @@ const Admin = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              {donations.filter(d => d.status === 'pending').length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
+              {donations.filter(d => d.status === 'pending').length === 0 ? <p className="text-center text-muted-foreground py-8">
                   Nenhuma doação pendente no momento
-                </p>
-              ) : (
-                <div className="rounded-md border border-border/50">
+                </p> : <div className="rounded-md border border-border/50">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1062,10 +992,7 @@ const Admin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {donations
-                        .filter(d => d.status === 'pending')
-                        .map(donation => (
-                          <TableRow key={donation.id}>
+                      {donations.filter(d => d.status === 'pending').map(donation => <TableRow key={donation.id}>
                             <TableCell className="text-sm">
                               {formatDate(donation.created_at)}
                             </TableCell>
@@ -1079,47 +1006,26 @@ const Admin = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedDonation(donation);
-                                    setShowPendingDonations(false);
-                                  }}
-                                  className="text-white hover:text-white hover:bg-accent/10"
-                                >
+                                <Button variant="ghost" size="sm" onClick={() => {
+                          setSelectedDonation(donation);
+                          setShowPendingDonations(false);
+                        }} className="text-white hover:text-white hover:bg-accent/10">
                                   Ver Detalhes
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleCancelDonation(donation.payment_id, donation.id)}
-                                  disabled={cancellingDonation === donation.id}
-                                  className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
-                                >
-                                  {cancellingDonation === donation.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <X className="h-4 w-4" />
-                                  )}
+                                <Button variant="ghost" size="sm" onClick={() => handleCancelDonation(donation.payment_id, donation.id)} disabled={cancellingDonation === donation.id} className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white">
+                                  {cancellingDonation === donation.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
                                 </Button>
                               </div>
                             </TableCell>
-                          </TableRow>
-                        ))}
+                          </TableRow>)}
                     </TableBody>
                   </Table>
-                </div>
-              )}
+                </div>}
               
               <div className="border-t border-border/50 pt-4 flex justify-between items-center">
                 <span className="text-lg font-semibold">Total Pendente</span>
                 <span className="text-xl font-bold text-accent">
-                  {formatCurrency(
-                    donations
-                      .filter(d => d.status === 'pending')
-                      .reduce((sum, d) => sum + d.amount, 0)
-                  )}
+                  {formatCurrency(donations.filter(d => d.status === 'pending').reduce((sum, d) => sum + d.amount, 0))}
                 </span>
               </div>
             </div>
@@ -1135,18 +1041,13 @@ const Admin = () => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-6">
-              {servidores.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
+              {servidores.length === 0 ? <p className="text-center text-muted-foreground py-8">
                   Nenhum servidor cadastrado
-                </p>
-              ) : (
-                servidores.map((servidor) => {
-                  const mods = allServidorMods.filter(m => m.servidor_id === servidor.id);
-                  const totalMods = mods.reduce((sum, m) => sum + m.valor_mensal, 0);
-                  const totalServidor = servidor.valor_mensal + totalMods;
-
-                  return (
-                    <div key={servidor.id} className="border border-border/50 rounded-lg p-4 space-y-4">
+                </p> : servidores.map(servidor => {
+              const mods = allServidorMods.filter(m => m.servidor_id === servidor.id);
+              const totalMods = mods.reduce((sum, m) => sum + m.valor_mensal, 0);
+              const totalServidor = servidor.valor_mensal + totalMods;
+              return <div key={servidor.id} className="border border-border/50 rounded-lg p-4 space-y-4">
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="text-lg font-semibold">{servidor.nome}</h3>
@@ -1164,35 +1065,24 @@ const Admin = () => {
                           <span className="text-accent font-semibold">{formatCurrency(servidor.valor_mensal)}</span>
                         </div>
 
-                        {mods.length > 0 && (
-                          <>
+                        {mods.length > 0 && <>
                             <p className="text-sm font-medium text-muted-foreground pt-2">MODs:</p>
-                            {mods.map((mod) => (
-                              <div key={mod.id} className="flex justify-between items-center py-2 pl-4 border-b border-border/20">
+                            {mods.map(mod => <div key={mod.id} className="flex justify-between items-center py-2 pl-4 border-b border-border/20">
                                 <div>
                                   <span className="text-sm">{mod.nome_mod}</span>
-                                  {mod.discord && (
-                                    <p className="text-xs text-muted-foreground">Discord: {mod.discord}</p>
-                                  )}
+                                  {mod.discord && <p className="text-xs text-muted-foreground">Discord: {mod.discord}</p>}
                                 </div>
                                 <span className="text-accent font-semibold">{formatCurrency(mod.valor_mensal)}</span>
-                              </div>
-                            ))}
-                          </>
-                        )}
+                              </div>)}
+                          </>}
                       </div>
-                    </div>
-                  );
-                })
-              )}
+                    </div>;
+            })}
 
               <div className="border-t-2 border-border pt-4 flex justify-between items-center">
                 <span className="text-xl font-bold">Total Geral</span>
                 <span className="text-2xl font-bold text-red-500">
-                  {formatCurrency(
-                    servidores.reduce((sum, s) => sum + s.valor_mensal, 0) +
-                    allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)
-                  )}
+                  {formatCurrency(servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))}
                 </span>
               </div>
             </div>
