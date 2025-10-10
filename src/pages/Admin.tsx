@@ -74,6 +74,8 @@ const Admin = () => {
   const [loadingOrder, setLoadingOrder] = useState(false);
   const [updatingStatuses, setUpdatingStatuses] = useState(false);
   const [cancellingDonation, setCancellingDonation] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const navigate = useNavigate();
   const {
     toast
@@ -630,10 +632,37 @@ const Admin = () => {
 
                 <TabsContent value="financeiro">
                   <CardHeader>
-                    <CardTitle className="text-2xl">Resumo Financeiro</CardTitle>
-                    <CardDescription>
-                      Visão geral das finanças
-                    </CardDescription>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Resumo Financeiro</CardTitle>
+                        <CardDescription>
+                          Visão geral das doações e custos mensais
+                        </CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <select 
+                          value={selectedMonth}
+                          onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                          className="px-3 py-2 bg-card border border-border rounded-md text-sm"
+                        >
+                          {Array.from({ length: 12 }, (_, i) => (
+                            <option key={i} value={i}>
+                              {new Date(2000, i).toLocaleString('pt-BR', { month: 'long' })}
+                            </option>
+                          ))}
+                        </select>
+                        <select 
+                          value={selectedYear}
+                          onChange={(e) => setSelectedYear(Number(e.target.value))}
+                          className="px-3 py-2 bg-card border border-border rounded-md text-sm"
+                        >
+                          {Array.from({ length: 5 }, (_, i) => {
+                            const year = new Date().getFullYear() - 2 + i;
+                            return <option key={year} value={year}>{year}</option>;
+                          })}
+                        </select>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -645,7 +674,11 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-foreground">
-                            {donations.length}
+                            {donations.filter(d => {
+                              const donationDate = new Date(d.created_at);
+                              return donationDate.getMonth() === selectedMonth && 
+                                     donationDate.getFullYear() === selectedYear;
+                            }).length}
                           </div>
                         </CardContent>
                       </Card>
@@ -658,7 +691,12 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-green-500">
-                            {donations.filter(d => d.status === 'approved').length}
+                            {donations.filter(d => {
+                              const donationDate = new Date(d.created_at);
+                              return d.status === 'approved' && 
+                                     donationDate.getMonth() === selectedMonth && 
+                                     donationDate.getFullYear() === selectedYear;
+                            }).length}
                           </div>
                         </CardContent>
                       </Card>
@@ -674,7 +712,12 @@ const Admin = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="text-2xl font-bold text-accent">
-                            {donations.filter(d => d.status === 'pending').length}
+                            {donations.filter(d => {
+                              const donationDate = new Date(d.created_at);
+                              return d.status === 'pending' && 
+                                     donationDate.getMonth() === selectedMonth && 
+                                     donationDate.getFullYear() === selectedYear;
+                            }).length}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
@@ -690,7 +733,12 @@ const Admin = () => {
                           <div className="text-2xl font-bold text-green-500">
                             {formatCurrency(
                               donations
-                                .filter(d => d.status === 'approved')
+                                .filter(d => {
+                                  const donationDate = new Date(d.created_at);
+                                  return d.status === 'approved' && 
+                                         donationDate.getMonth() === selectedMonth && 
+                                         donationDate.getFullYear() === selectedYear;
+                                })
                                 .reduce((sum, d) => sum + d.amount, 0)
                             )}
                           </div>
@@ -707,7 +755,12 @@ const Admin = () => {
                           <div className="text-2xl font-bold text-red-800">
                             {formatCurrency(
                               donations
-                                .filter(d => d.status === 'pending')
+                                .filter(d => {
+                                  const donationDate = new Date(d.created_at);
+                                  return d.status === 'pending' && 
+                                         donationDate.getMonth() === selectedMonth && 
+                                         donationDate.getFullYear() === selectedYear;
+                                })
                                 .reduce((sum, d) => sum + d.amount, 0)
                             )}
                           </div>
@@ -738,20 +791,34 @@ const Admin = () => {
                     <div className="mt-6 p-6 bg-card/50 border-2 border-accent/50 rounded-lg">
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-lg font-medium text-muted-foreground">Saldo Total</p>
+                          <p className="text-lg font-medium text-muted-foreground">Saldo do Mês</p>
                           <p className="text-sm text-muted-foreground mt-1">
                             Valor Total Recebido - Custo Mensal Servidores
                           </p>
                         </div>
                         <div className="text-right">
                           <div className={`text-3xl font-bold ${
-                            (donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) - 
+                            (donations
+                              .filter(d => {
+                                const donationDate = new Date(d.created_at);
+                                return d.status === 'approved' && 
+                                       donationDate.getMonth() === selectedMonth && 
+                                       donationDate.getFullYear() === selectedYear;
+                              })
+                              .reduce((sum, d) => sum + d.amount, 0) - 
                             (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))) >= 0
                             ? 'text-green-500'
                             : 'text-red-500'
                           }`}>
                             {formatCurrency(
-                              donations.filter(d => d.status === 'approved').reduce((sum, d) => sum + d.amount, 0) -
+                              donations
+                                .filter(d => {
+                                  const donationDate = new Date(d.created_at);
+                                  return d.status === 'approved' && 
+                                         donationDate.getMonth() === selectedMonth && 
+                                         donationDate.getFullYear() === selectedYear;
+                                })
+                                .reduce((sum, d) => sum + d.amount, 0) -
                               (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))
                             )}
                           </div>
