@@ -99,8 +99,7 @@ export const SecretsManager = () => {
   };
 
   const maskValue = (value: string) => {
-    if (value.length <= 8) return '•'.repeat(value.length);
-    return value.substring(0, 4) + '•'.repeat(value.length - 8) + value.substring(value.length - 4);
+    return '•'.repeat(12);
   };
 
   if (loading) {
