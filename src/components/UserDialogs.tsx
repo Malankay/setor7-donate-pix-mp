@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, KeyRound } from "lucide-react";
 
 interface UserDialogProps {
   open: boolean;
@@ -173,6 +173,7 @@ interface EditUserDialogProps {
 export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUserDialogProps) => {
   const [fullName, setFullName] = useState(user?.full_name || "");
   const [loading, setLoading] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -207,6 +208,33 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!user) return;
+
+    setResettingPassword(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Email de reset enviado",
+        description: `Um email com instruções para resetar a senha foi enviado para ${user.email}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao resetar senha",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setResettingPassword(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -236,6 +264,27 @@ export const EditUserDialog = ({ open, onOpenChange, user, onSuccess }: EditUser
                 placeholder="João Silva"
               />
             </div>
+          </div>
+          <div className="pt-4 border-t border-border/50">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleResetPassword}
+              disabled={resettingPassword}
+              className="w-full gap-2"
+            >
+              {resettingPassword ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <KeyRound className="h-4 w-4" />
+                  Resetar Senha
+                </>
+              )}
+            </Button>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
