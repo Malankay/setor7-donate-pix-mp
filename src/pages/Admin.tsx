@@ -865,47 +865,45 @@ const Admin = () => {
                         <Copy className="h-4 w-4" />
                         Copiar código PIX
                       </Button>
-                      {selectedDonation.status === 'pending' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="gap-2"
-                          onClick={async () => {
-                            try {
-                              const { data, error } = await supabase.functions.invoke('resend-donation-email', {
-                                body: {
-                                  name: selectedDonation.name,
-                                  email: selectedDonation.email,
-                                  phone: selectedDonation.phone,
-                                  steamId: selectedDonation.steam_id,
-                                  amount: selectedDonation.amount,
-                                  description: selectedDonation.description,
-                                  qrCodeBase64: selectedDonation.qr_code_base64,
-                                  qrCode: selectedDonation.qr_code,
-                                  createdAt: selectedDonation.created_at
-                                }
-                              });
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2"
+                        onClick={async () => {
+                          try {
+                            const { data, error } = await supabase.functions.invoke('resend-donation-email', {
+                              body: {
+                                name: selectedDonation.name,
+                                email: selectedDonation.email,
+                                phone: selectedDonation.phone,
+                                steamId: selectedDonation.steam_id,
+                                amount: selectedDonation.amount,
+                                description: selectedDonation.description,
+                                qrCodeBase64: selectedDonation.qr_code_base64,
+                                qrCode: selectedDonation.qr_code,
+                                createdAt: selectedDonation.created_at
+                              }
+                            });
 
-                              if (error) throw error;
+                            if (error) throw error;
 
-                              toast({
-                                title: "Email enviado!",
-                                description: "O email com os detalhes da doação foi enviado com sucesso."
-                              });
-                            } catch (error) {
-                              console.error('Error resending email:', error);
-                              toast({
-                                title: "Erro ao enviar email",
-                                description: "Não foi possível enviar o email. Tente novamente.",
-                                variant: "destructive"
-                              });
-                            }
-                          }}
-                        >
-                          <Mail className="h-4 w-4" />
-                          Reenviar
-                        </Button>
-                      )}
+                            toast({
+                              title: "Email enviado!",
+                              description: "O email com os detalhes da doação foi enviado com sucesso."
+                            });
+                          } catch (error) {
+                            console.error('Error resending email:', error);
+                            toast({
+                              title: "Erro ao enviar email",
+                              description: "Não foi possível enviar o email. Tente novamente.",
+                              variant: "destructive"
+                            });
+                          }
+                        }}
+                      >
+                        <Mail className="h-4 w-4" />
+                        Reenviar Email
+                      </Button>
                     </div>}
                   </div>}
               </div>}
