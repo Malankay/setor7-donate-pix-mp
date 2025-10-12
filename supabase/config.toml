@@ -4,4 +4,10 @@ project_id = "odnysftxwdfaujtmzerg"
 verify_jwt = false
 
 [functions.get-mercadopago-order]
-verify_jwt = false
+verify_jwt = true
+
+[functions.cancel-mercadopago-order]
+verify_jwt = true
+
+[functions.resend-donation-email]
+verify_jwt = true
