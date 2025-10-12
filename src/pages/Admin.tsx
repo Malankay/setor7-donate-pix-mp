@@ -107,38 +107,13 @@ const Admin = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
   useEffect(() => {
-    const checkAdminRole = async () => {
-      if (!user) return;
-      
-      // Check if user has admin role
-      const { data: roleData, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin')
-        .maybeSingle();
-      
-      if (error || !roleData) {
-        console.error('Unauthorized access attempt to admin panel');
-        toast({
-          title: "Acesso negado",
-          description: "Você não tem permissão para acessar o painel administrativo.",
-          variant: "destructive",
-        });
-        navigate('/');
-        return;
-      }
-      
-      // User is admin, load data
+    if (user) {
       fetchDonations();
       fetchUsers();
       fetchServidores();
       fetchAllServidorMods();
-      setLoading(false);
-    };
-    
-    checkAdminRole();
-  }, [user, navigate, toast]);
+    }
+  }, [user]);
 
   // Auto-update donation statuses every 2 minutes
   useEffect(() => {

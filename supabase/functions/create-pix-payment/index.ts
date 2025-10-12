@@ -1,20 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const PaymentRequestSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório').max(100, 'Nome muito longo'),
-  email: z.string().email('Email inválido').max(255, 'Email muito longo'),
-  phone: z.string().min(1, 'Telefone é obrigatório').max(20, 'Telefone muito longo'),
-  steamId: z.string().max(100, 'Steam ID muito longo').optional(),
-  amount: z.number().positive('Valor deve ser positivo').max(999999, 'Valor muito alto'),
-  description: z.string().max(500, 'Descrição muito longa').optional()
-});
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -23,22 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const requestBody = await req.json();
-    
-    // Validate input
-    const validationResult = PaymentRequestSchema.safeParse(requestBody);
-    if (!validationResult.success) {
-      console.error('Validation error:', validationResult.error);
-      return new Response(
-        JSON.stringify({ error: 'Dados inválidos', details: validationResult.error.issues }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
-    }
-    
-    const { name, email, phone, steamId, amount, description } = validationResult.data;
+    const { name, email, phone, steamId, amount, description } = await req.json();
 
     console.log('Creating PIX payment:', { name, email, phone, steamId, amount });
 
@@ -65,7 +40,7 @@ serve(async (req) => {
 
     // Criar pagamento PIX no Mercado Pago
     const paymentData = {
-      transaction_amount: amount,
+      transaction_amount: parseFloat(amount),
       description: description || 'Doação Setor 7 Hardcore PVE',
       payment_method_id: 'pix',
       payer: {
@@ -93,7 +68,7 @@ serve(async (req) => {
             title: description || 'Doação Setor 7 Hardcore PVE',
             description: `Doação de ${name} - Steam ID: ${steamId}`,
             quantity: 1,
-            unit_price: amount,
+            unit_price: parseFloat(amount),
           },
         ],
       },
@@ -148,7 +123,7 @@ serve(async (req) => {
           email,
           phone,
           steam_id: steamId,
-          amount: amount,
+          amount: parseFloat(amount),
           description: description || 'Doação Setor 7 Hardcore PVE',
           status: data.status,
           qr_code: pixData.qr_code,

@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,17 +7,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-const DonationEmailSchema = z.object({
-  name: z.string().min(1).max(100),
-  email: z.string().email().max(255),
-  phone: z.string().max(20).optional(),
-  steamId: z.string().max(100).optional(),
-  amount: z.number().positive(),
-  description: z.string().max(500).optional(),
-  qrCodeBase64: z.string(),
-  qrCode: z.string(),
-  createdAt: z.string()
-});
+interface DonationEmailRequest {
+  name: string;
+  email: string;
+  phone?: string;
+  steamId?: string;
+  amount: number;
+  description?: string;
+  qrCodeBase64: string;
+  qrCode: string;
+  createdAt: string;
+}
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -43,21 +42,6 @@ const handler = async (req: Request): Promise<Response> => {
     
     const RESEND_API_KEY = secretData.value;
     
-    const requestBody = await req.json();
-    
-    // Validate input
-    const validationResult = DonationEmailSchema.safeParse(requestBody);
-    if (!validationResult.success) {
-      console.error('Validation error:', validationResult.error);
-      return new Response(
-        JSON.stringify({ error: 'Dados inválidos' }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-    
     const { 
       name, 
       email, 
@@ -68,7 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
       qrCodeBase64, 
       qrCode,
       createdAt 
-    } = validationResult.data;
+    }: DonationEmailRequest = await req.json();
 
     const formatCurrency = (value: number) => {
       return new Intl.NumberFormat('pt-BR', {

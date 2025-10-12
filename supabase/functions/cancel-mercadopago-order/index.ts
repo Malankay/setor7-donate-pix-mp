@@ -1,16 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-const CancelRequestSchema = z.object({
-  orderId: z.string().min(1, 'Order ID é obrigatório'),
-  donationId: z.string().uuid('Donation ID inválido')
-});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -18,22 +12,15 @@ serve(async (req) => {
   }
 
   try {
-    const requestBody = await req.json();
+    const { orderId, donationId } = await req.json();
     
-    // Validate input
-    const validationResult = CancelRequestSchema.safeParse(requestBody);
-    if (!validationResult.success) {
-      console.error('Validation error:', validationResult.error);
-      return new Response(
-        JSON.stringify({ error: 'Dados inválidos' }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
+    if (!orderId) {
+      throw new Error('Order ID é obrigatório');
     }
-    
-    const { orderId, donationId } = validationResult.data;
+
+    if (!donationId) {
+      throw new Error('Donation ID é obrigatório');
+    }
 
     // Get Mercado Pago token from database
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
