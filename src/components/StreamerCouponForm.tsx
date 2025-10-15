@@ -30,9 +30,47 @@ export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: 
   const [descricao, setDescricao] = useState(coupon?.descricao || "");
   const [dataInicio, setDataInicio] = useState(coupon?.data_inicio?.split('T')[0] || "");
   const [dataFim, setDataFim] = useState(coupon?.data_fim?.split('T')[0] || "");
-  const [valor, setValor] = useState(coupon?.valor?.toString() || "");
-  const [porcentagem, setPorcentagem] = useState(coupon?.porcentagem?.toString() || "");
+  const [valor, setValor] = useState(() => {
+    if (coupon?.valor) {
+      return coupon.valor.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    return "";
+  });
+  const [porcentagem, setPorcentagem] = useState(() => {
+    if (coupon?.porcentagem) {
+      return coupon.porcentagem.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    return "";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const formatCurrency = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    const amount = parseFloat(numbers) / 100;
+    
+    if (isNaN(amount)) return "";
+    return amount.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const formatPercentage = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    const amount = parseFloat(numbers) / 100;
+    
+    if (isNaN(amount)) return "";
+    return amount.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,8 +100,8 @@ export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: 
         descricao: descricao || null,
         data_inicio: new Date(dataInicio).toISOString(),
         data_fim: new Date(dataFim).toISOString(),
-        valor: valor ? parseFloat(valor) : null,
-        porcentagem: porcentagem ? parseFloat(porcentagem) : null,
+        valor: valor ? parseFloat(valor.replace(/\./g, "").replace(",", ".")) : null,
+        porcentagem: porcentagem ? parseFloat(porcentagem.replace(/\./g, "").replace(",", ".")) : null,
       };
 
       if (coupon?.id) {
@@ -93,15 +131,17 @@ export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: 
   };
 
   const handleValorChange = (value: string) => {
-    setValor(value);
-    if (value) {
+    const formatted = formatCurrency(value);
+    setValor(formatted);
+    if (formatted) {
       setPorcentagem("");
     }
   };
 
   const handlePorcentagemChange = (value: string) => {
-    setPorcentagem(value);
-    if (value) {
+    const formatted = formatPercentage(value);
+    setPorcentagem(formatted);
+    if (formatted) {
       setValor("");
     }
   };
@@ -164,8 +204,7 @@ export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: 
         <Label htmlFor="valor">Valor (R$)</Label>
         <Input
           id="valor"
-          type="number"
-          step="0.01"
+          type="text"
           value={valor}
           onChange={(e) => handleValorChange(e.target.value)}
           disabled={!!porcentagem}
@@ -177,8 +216,7 @@ export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: 
         <Label htmlFor="porcentagem">Porcentagem (%)</Label>
         <Input
           id="porcentagem"
-          type="number"
-          step="0.01"
+          type="text"
           value={porcentagem}
           onChange={(e) => handlePorcentagemChange(e.target.value)}
           disabled={!!valor}

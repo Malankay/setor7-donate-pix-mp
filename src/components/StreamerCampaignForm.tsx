@@ -28,8 +28,33 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
   const [descricao, setDescricao] = useState(campaign?.descricao || "");
   const [dataInicio, setDataInicio] = useState(campaign?.data_inicio?.split('T')[0] || "");
   const [dataFim, setDataFim] = useState(campaign?.data_fim?.split('T')[0] || "");
-  const [valor, setValor] = useState(campaign?.valor?.toString() || "");
+  const [valor, setValor] = useState(() => {
+    if (campaign?.valor) {
+      return campaign.valor.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+    return "";
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const formatCurrency = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    const amount = parseFloat(numbers) / 100;
+    
+    if (isNaN(amount)) return "";
+    return amount.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrency(e.target.value);
+    setValor(formatted);
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +64,7 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
       return;
     }
 
-    const valorNum = parseFloat(valor);
+    const valorNum = parseFloat(valor.replace(/\./g, "").replace(",", "."));
     if (isNaN(valorNum) || valorNum <= 0) {
       toast.error("O valor deve ser maior que zero");
       return;
@@ -132,12 +157,11 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
         <Label htmlFor="valor">Valor (R$) *</Label>
         <Input
           id="valor"
-          type="number"
-          step="0.01"
+          type="text"
           value={valor}
-          onChange={(e) => setValor(e.target.value)}
+          onChange={handleValorChange}
           required
-          placeholder="0.00"
+          placeholder="0,00"
         />
       </div>
 
