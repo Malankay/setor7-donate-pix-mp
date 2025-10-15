@@ -1761,7 +1761,9 @@ const Admin = () => {
                 streamerId={selectedStreamerForCoupons}
                 onSuccess={() => {
                   setShowAddCouponDialog(false);
-                  fetchStreamerCoupons(selectedStreamerForCoupons);
+                  if (selectedStreamerForCoupons) {
+                    fetchStreamerCoupons(selectedStreamerForCoupons);
+                  }
                 }}
                 onCancel={() => setShowAddCouponDialog(false)}
               />
@@ -1785,7 +1787,9 @@ const Admin = () => {
                 onSuccess={() => {
                   setShowEditCouponDialog(false);
                   setEditingCoupon(null);
-                  fetchStreamerCoupons(selectedStreamerForCoupons);
+                  if (selectedStreamerForCoupons) {
+                    fetchStreamerCoupons(selectedStreamerForCoupons);
+                  }
                 }}
                 onCancel={() => {
                   setShowEditCouponDialog(false);
@@ -1902,8 +1906,10 @@ const Admin = () => {
                 streamerId={selectedStreamerForCampaigns}
                 onSuccess={() => {
                   setShowAddCampaignDialog(false);
-                  fetchStreamerCampaigns(selectedStreamerForCampaigns);
-                  fetchAllCampaigns();
+                  if (selectedStreamerForCampaigns) {
+                    fetchStreamerCampaigns(selectedStreamerForCampaigns);
+                    fetchAllCampaigns();
+                  }
                 }}
                 onCancel={() => setShowAddCampaignDialog(false)}
               />
@@ -1927,8 +1933,10 @@ const Admin = () => {
                 onSuccess={() => {
                   setShowEditCampaignDialog(false);
                   setEditingCampaign(null);
-                  fetchStreamerCampaigns(selectedStreamerForCampaigns);
-                  fetchAllCampaigns();
+                  if (selectedStreamerForCampaigns) {
+                    fetchStreamerCampaigns(selectedStreamerForCampaigns);
+                    fetchAllCampaigns();
+                  }
                 }}
                 onCancel={() => {
                   setShowEditCampaignDialog(false);
