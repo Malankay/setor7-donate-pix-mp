@@ -43,23 +43,50 @@ serve(async (req) => {
     let appliedDiscount = 0;
     let couponCode = null;
     let discountValue = 0;
+    let streamerSteamId = null;
     
     if (discountCoupon) {
-      const { data: couponData, error: couponError } = await supabaseClient
-        .from('discount_coupons')
-        .select('discount_percentage, active, code')
-        .eq('code', discountCoupon.toUpperCase())
-        .eq('active', true)
+      // Buscar cupom de streamer primeiro
+      const { data: streamerCouponData, error: streamerCouponError } = await supabaseClient
+        .from('streamer_coupons')
+        .select('codigo, porcentagem, valor, streamer_id, streamers(steam_id)')
+        .eq('codigo', discountCoupon.toUpperCase())
+        .gte('data_fim', new Date().toISOString())
+        .lte('data_inicio', new Date().toISOString())
         .maybeSingle();
       
-      if (couponData) {
-        appliedDiscount = couponData.discount_percentage;
-        couponCode = couponData.code;
-        discountValue = parseFloat(amount) * (appliedDiscount / 100);
-        finalAmount = finalAmount * (1 - appliedDiscount / 100);
-        console.log(`Cupom aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}% - Valor: ${discountValue}`);
+      if (streamerCouponData) {
+        // Aplicar desconto do cupom de streamer
+        if (streamerCouponData.porcentagem) {
+          appliedDiscount = streamerCouponData.porcentagem;
+          discountValue = parseFloat(amount) * (appliedDiscount / 100);
+          finalAmount = finalAmount * (1 - appliedDiscount / 100);
+        } else if (streamerCouponData.valor) {
+          discountValue = streamerCouponData.valor;
+          finalAmount = Math.max(0, finalAmount - discountValue);
+          appliedDiscount = (discountValue / parseFloat(amount)) * 100;
+        }
+        couponCode = streamerCouponData.codigo;
+        streamerSteamId = streamerCouponData.streamers?.steam_id || null;
+        console.log(`Cupom de streamer aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}% - Valor: ${discountValue} - Streamer Steam ID: ${streamerSteamId}`);
       } else {
-        console.log('Cupom inválido ou inativo:', discountCoupon);
+        // Se não encontrou cupom de streamer, buscar cupom global
+        const { data: couponData, error: couponError } = await supabaseClient
+          .from('discount_coupons')
+          .select('discount_percentage, active, code')
+          .eq('code', discountCoupon.toUpperCase())
+          .eq('active', true)
+          .maybeSingle();
+        
+        if (couponData) {
+          appliedDiscount = couponData.discount_percentage;
+          couponCode = couponData.code;
+          discountValue = parseFloat(amount) * (appliedDiscount / 100);
+          finalAmount = finalAmount * (1 - appliedDiscount / 100);
+          console.log(`Cupom global aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}% - Valor: ${discountValue}`);
+        } else {
+          console.log('Cupom inválido ou inativo:', discountCoupon);
+        }
       }
     }
 
@@ -103,6 +130,7 @@ serve(async (req) => {
         coupon_code: couponCode || '',
         coupon_percentage: appliedDiscount || 0,
         coupon_discount_value: discountValue || 0,
+        streamer_steam_id: streamerSteamId || '',
       },
     };
 
