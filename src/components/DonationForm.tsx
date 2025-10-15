@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,8 +20,10 @@ const DonationForm = () => {
     qr_code: string;
     qr_code_base64: string;
     payment_id: string;
+    donation_id?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentApproved, setPaymentApproved] = useState(false);
 
   const formatCurrency = (value: string) => {
     // Remove tudo exceto números
@@ -108,6 +110,7 @@ const DonationForm = () => {
 
       setPixData(data);
       setShowQrCode(true);
+      setPaymentApproved(false);
       toast.success("QR Code PIX gerado! Escaneie para doar.");
     } catch (error) {
       console.error('Erro ao criar pagamento:', error);
@@ -116,6 +119,43 @@ const DonationForm = () => {
       setIsLoading(false);
     }
   };
+
+  // Polling para verificar o status do pagamento
+  useEffect(() => {
+    if (!showQrCode || !pixData?.payment_id || paymentApproved) return;
+
+    const checkPaymentStatus = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('get-mercadopago-order', {
+          body: {
+            orderId: pixData.payment_id,
+            donationId: pixData.donation_id,
+          },
+        });
+
+        if (error) {
+          console.error('Erro ao verificar status:', error);
+          return;
+        }
+
+        if (data?.status === 'approved') {
+          setPaymentApproved(true);
+          toast.success("🎉 Pagamento aprovado! Obrigado pela sua doação!", {
+            duration: 10000,
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao verificar pagamento:', error);
+      }
+    };
+
+    const intervalId = setInterval(checkPaymentStatus, 30000);
+
+    // Verificação inicial imediata
+    checkPaymentStatus();
+
+    return () => clearInterval(intervalId);
+  }, [showQrCode, pixData, paymentApproved]);
 
   const handleCopyPixCode = () => {
     if (pixData?.qr_code) {
@@ -171,9 +211,15 @@ const DonationForm = () => {
             </Button>
           </div>
           <div className="text-center pt-4 border-t border-border">
-            <p className="text-sm text-muted-foreground">
-              Obrigado pelo apoio, {formData.name}! 🎮
-            </p>
+            {paymentApproved ? (
+              <p className="text-lg font-semibold text-green-500">
+                ✅ Pagamento Aprovado! Muito obrigado, {formData.name}! 🎮
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Aguardando pagamento... Obrigado pelo apoio, {formData.name}! 🎮
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
