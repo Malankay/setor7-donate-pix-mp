@@ -26,8 +26,20 @@ interface StreamerCampaignFormProps {
 export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel }: StreamerCampaignFormProps) {
   const [nome, setNome] = useState(campaign?.nome || "");
   const [descricao, setDescricao] = useState(campaign?.descricao || "");
-  const [dataInicio, setDataInicio] = useState(campaign?.data_inicio?.split('T')[0] || "");
-  const [dataFim, setDataFim] = useState(campaign?.data_fim?.split('T')[0] || "");
+  const [dataInicio, setDataInicio] = useState(() => {
+    if (campaign?.data_inicio) {
+      const date = new Date(campaign.data_inicio);
+      return date.toLocaleDateString("pt-BR");
+    }
+    return "";
+  });
+  const [dataFim, setDataFim] = useState(() => {
+    if (campaign?.data_fim) {
+      const date = new Date(campaign.data_fim);
+      return date.toLocaleDateString("pt-BR");
+    }
+    return "";
+  });
   const [valor, setValor] = useState(() => {
     if (campaign?.valor) {
       return campaign.valor.toLocaleString("pt-BR", {
@@ -50,9 +62,40 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
     });
   };
 
+  const formatDate = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 4) return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+  };
+
+  const parseDateToBR = (dateStr: string): Date | null => {
+    const parts = dateStr.split("/");
+    if (parts.length !== 3) return null;
+    
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const year = parseInt(parts[2], 10);
+    
+    const date = new Date(year, month, day);
+    if (isNaN(date.getTime())) return null;
+    
+    return date;
+  };
+
   const handleValorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCurrency(e.target.value);
     setValor(formatted);
+  };
+
+  const handleDataInicioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatDate(e.target.value);
+    setDataInicio(formatted);
+  };
+
+  const handleDataFimChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatDate(e.target.value);
+    setDataFim(formatted);
   };
 
 
@@ -61,6 +104,19 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
     
     if (!nome || !dataInicio || !dataFim || !valor) {
       toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    const dataInicioDate = parseDateToBR(dataInicio);
+    const dataFimDate = parseDateToBR(dataFim);
+
+    if (!dataInicioDate || !dataFimDate) {
+      toast.error("Data inválida. Use o formato dd/mm/aaaa");
+      return;
+    }
+
+    if (dataFimDate <= dataInicioDate) {
+      toast.error("A data de fim deve ser posterior à data de início");
       return;
     }
 
@@ -77,8 +133,8 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
         streamer_id: streamerId,
         nome,
         descricao: descricao || null,
-        data_inicio: new Date(dataInicio).toISOString(),
-        data_fim: new Date(dataFim).toISOString(),
+        data_inicio: dataInicioDate.toISOString(),
+        data_fim: dataFimDate.toISOString(),
         valor: valorNum,
       };
 
@@ -132,24 +188,28 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
       </div>
 
       <div>
-        <Label htmlFor="dataInicio">Data de Início *</Label>
+        <Label htmlFor="dataInicio">Data de Início (dd/mm/aaaa) *</Label>
         <Input
           id="dataInicio"
-          type="date"
+          type="text"
           value={dataInicio}
-          onChange={(e) => setDataInicio(e.target.value)}
+          onChange={handleDataInicioChange}
           required
+          placeholder="dd/mm/aaaa"
+          maxLength={10}
         />
       </div>
 
       <div>
-        <Label htmlFor="dataFim">Data de Fim *</Label>
+        <Label htmlFor="dataFim">Data de Fim (dd/mm/aaaa) *</Label>
         <Input
           id="dataFim"
-          type="date"
+          type="text"
           value={dataFim}
-          onChange={(e) => setDataFim(e.target.value)}
+          onChange={handleDataFimChange}
           required
+          placeholder="dd/mm/aaaa"
+          maxLength={10}
         />
       </div>
 
