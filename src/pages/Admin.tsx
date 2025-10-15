@@ -1109,12 +1109,8 @@ const Admin = () => {
                         <CardContent>
                           <div className="text-2xl font-bold text-red-800">
                             {formatCurrency(allCampaigns.filter(c => {
-                              const now = new Date();
                               const inicio = new Date(c.data_inicio);
-                              const fim = new Date(c.data_fim);
-                              return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
-                                     fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
-                                     (inicio <= now && fim >= now);
+                              return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear;
                             }).reduce((sum, c) => sum + c.valor, 0))}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">Campanhas ativas no período</p>
@@ -1143,12 +1139,8 @@ const Admin = () => {
 
                     {/* Detalhamento de Campanhas */}
                     {allCampaigns.filter(c => {
-                      const now = new Date();
                       const inicio = new Date(c.data_inicio);
-                      const fim = new Date(c.data_fim);
-                      return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
-                             fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
-                             (inicio <= now && fim >= now);
+                      return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear;
                     }).length > 0 && (
                       <div className="mt-6">
                         <h3 className="text-lg font-semibold mb-4">Campanhas do Período</h3>
@@ -1166,12 +1158,8 @@ const Admin = () => {
                             </TableHeader>
                             <TableBody>
                               {allCampaigns.filter(c => {
-                                const now = new Date();
                                 const inicio = new Date(c.data_inicio);
-                                const fim = new Date(c.data_fim);
-                                return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
-                                       fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
-                                       (inicio <= now && fim >= now);
+                                return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear;
                               }).map((campaign) => {
                                 const now = new Date();
                                 const inicio = new Date(campaign.data_inicio);
@@ -1217,12 +1205,8 @@ const Admin = () => {
                             const totalServidores = servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0);
                             
                             const totalCampanhas = allCampaigns.filter(c => {
-                              const now = new Date();
                               const inicio = new Date(c.data_inicio);
-                              const fim = new Date(c.data_fim);
-                              return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
-                                     fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
-                                     (inicio <= now && fim >= now);
+                              return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear;
                             }).reduce((sum, c) => sum + c.valor, 0);
                             
                             const saldo = totalRecebido - totalServidores - totalCampanhas;
@@ -1237,12 +1221,8 @@ const Admin = () => {
                               const totalServidores = servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0);
                               
                               const totalCampanhas = allCampaigns.filter(c => {
-                                const now = new Date();
                                 const inicio = new Date(c.data_inicio);
-                                const fim = new Date(c.data_fim);
-                                return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
-                                       fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
-                                       (inicio <= now && fim >= now);
+                                return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear;
                               }).reduce((sum, c) => sum + c.valor, 0);
                               
                               return totalRecebido - totalServidores - totalCampanhas;
@@ -1580,12 +1560,8 @@ const Admin = () => {
                   <span className="text-lg font-semibold">Total Campanhas</span>
                   <span className="text-xl font-bold text-red-800">
                     {formatCurrency(allCampaigns.filter(c => {
-                      const now = new Date();
                       const inicio = new Date(c.data_inicio);
-                      const fim = new Date(c.data_fim);
-                      return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
-                             fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
-                             (inicio <= now && fim >= now);
+                      return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear;
                     }).reduce((sum, c) => sum + c.valor, 0))}
                   </span>
                 </div>
@@ -1597,12 +1573,8 @@ const Admin = () => {
                       servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + 
                       allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0) +
                       allCampaigns.filter(c => {
-                        const now = new Date();
                         const inicio = new Date(c.data_inicio);
-                        const fim = new Date(c.data_fim);
-                        return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
-                               fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
-                               (inicio <= now && fim >= now);
+                        return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear;
                       }).reduce((sum, c) => sum + c.valor, 0)
                     )}
                   </span>
