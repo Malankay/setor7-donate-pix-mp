@@ -1104,7 +1104,7 @@ const Admin = () => {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <div className="text-2xl font-bold text-blue-500">
+                          <div className="text-2xl font-bold text-red-800">
                             {formatCurrency(allCampaigns.filter(c => {
                               const now = new Date();
                               const inicio = new Date(c.data_inicio);
@@ -1565,11 +1565,45 @@ const Admin = () => {
                     </div>;
             })}
 
-              <div className="border-t-2 border-border pt-4 flex justify-between items-center">
-                <span className="text-xl font-bold">Total Geral</span>
-                <span className="text-2xl font-bold text-red-500">
-                  {formatCurrency(servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))}
-                </span>
+              <div className="border-t-2 border-border pt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Total Servidores e MODs</span>
+                  <span className="text-xl font-bold text-red-500">
+                    {formatCurrency(servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0))}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Total Campanhas</span>
+                  <span className="text-xl font-bold text-red-800">
+                    {formatCurrency(allCampaigns.filter(c => {
+                      const now = new Date();
+                      const inicio = new Date(c.data_inicio);
+                      const fim = new Date(c.data_fim);
+                      return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
+                             fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
+                             (inicio <= now && fim >= now);
+                    }).reduce((sum, c) => sum + c.valor, 0))}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center pt-3 border-t border-border">
+                  <span className="text-xl font-bold">Total Geral</span>
+                  <span className="text-2xl font-bold text-red-500">
+                    {formatCurrency(
+                      servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + 
+                      allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0) +
+                      allCampaigns.filter(c => {
+                        const now = new Date();
+                        const inicio = new Date(c.data_inicio);
+                        const fim = new Date(c.data_fim);
+                        return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
+                               fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
+                               (inicio <= now && fim >= now);
+                      }).reduce((sum, c) => sum + c.valor, 0)
+                    )}
+                  </span>
+                </div>
               </div>
             </div>
           </DialogContent>
