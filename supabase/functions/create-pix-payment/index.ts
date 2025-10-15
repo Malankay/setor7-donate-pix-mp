@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { name, email, phone, steamId, amount, description } = await req.json();
+    const { name, email, phone, steamId, amount, description, discountCoupon } = await req.json();
 
-    console.log('Creating PIX payment:', { name, email, phone, steamId, amount });
+    console.log('Creating PIX payment:', { name, email, phone, steamId, amount, discountCoupon });
 
     // Get Mercado Pago token from database
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -38,9 +38,30 @@ serve(async (req) => {
       throw new Error('Mercado Pago Access Token não configurado');
     }
 
+    // Verificar e aplicar cupom de desconto se fornecido
+    let finalAmount = parseFloat(amount);
+    let appliedDiscount = 0;
+    
+    if (discountCoupon) {
+      const { data: couponData, error: couponError } = await supabaseClient
+        .from('discount_coupons')
+        .select('discount_percentage, active')
+        .eq('code', discountCoupon.toUpperCase())
+        .eq('active', true)
+        .maybeSingle();
+      
+      if (couponData) {
+        appliedDiscount = couponData.discount_percentage;
+        finalAmount = finalAmount * (1 - appliedDiscount / 100);
+        console.log(`Cupom aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}%`);
+      } else {
+        console.log('Cupom inválido ou inativo:', discountCoupon);
+      }
+    }
+
     // Criar pagamento PIX no Mercado Pago
     const paymentData = {
-      transaction_amount: parseFloat(amount),
+      transaction_amount: finalAmount,
       description: description || 'Doação Setor 7 Hardcore PVE',
       payment_method_id: 'pix',
       payer: {
@@ -123,12 +144,13 @@ serve(async (req) => {
           email,
           phone,
           steam_id: steamId,
-          amount: parseFloat(amount),
+          amount: finalAmount,
           description: description || 'Doação Setor 7 Hardcore PVE',
           status: data.status,
           qr_code: pixData.qr_code,
           qr_code_base64: pixData.qr_code_base64,
           ticket_url: pixData.ticket_url,
+          discount_coupon: discountCoupon || null,
         });
 
       if (dbError) {

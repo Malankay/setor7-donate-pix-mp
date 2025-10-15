@@ -41,11 +41,39 @@ export type Database = {
         }
         Relationships: []
       }
+      discount_coupons: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          discount_percentage: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          discount_percentage: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          discount_percentage?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       donations: {
         Row: {
           amount: number
           created_at: string
           description: string | null
+          discount_coupon: string | null
           email: string
           id: string
           name: string
@@ -62,6 +90,7 @@ export type Database = {
           amount: number
           created_at?: string
           description?: string | null
+          discount_coupon?: string | null
           email: string
           id?: string
           name: string
@@ -78,6 +107,7 @@ export type Database = {
           amount?: number
           created_at?: string
           description?: string | null
+          discount_coupon?: string | null
           email?: string
           id?: string
           name?: string

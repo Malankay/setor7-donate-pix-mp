@@ -14,6 +14,7 @@ const DonationForm = () => {
     phone: "",
     steamId: "",
     amount: "",
+    discountCoupon: "",
   });
   const [showQrCode, setShowQrCode] = useState(false);
   const [pixData, setPixData] = useState<{
@@ -101,6 +102,7 @@ const DonationForm = () => {
           steamId: formData.steamId,
           amount: amountValue,
           description: `Doação Setor 7 - ${formData.name} (${formData.steamId})`,
+          discountCoupon: formData.discountCoupon,
         },
       });
 
@@ -317,6 +319,18 @@ const DonationForm = () => {
               onChange={handleChange}
               placeholder="0,00"
               required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="discountCoupon">Cupom de Desconto</Label>
+            <Input
+              id="discountCoupon"
+              name="discountCoupon"
+              type="text"
+              value={formData.discountCoupon}
+              onChange={handleChange}
+              placeholder="Digite seu cupom"
             />
           </div>
 
