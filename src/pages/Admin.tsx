@@ -134,6 +134,7 @@ const Admin = () => {
   const [showEditCampaignDialog, setShowEditCampaignDialog] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
   const [allCampaigns, setAllCampaigns] = useState<StreamerCampaign[]>([]);
+  const [activeTab, setActiveTab] = useState("donations");
   const navigate = useNavigate();
   const {
     toast
@@ -173,15 +174,15 @@ const Admin = () => {
     }
   }, [user]);
 
-  // Auto-update donation statuses every 2 minutes
+  // Auto-update donation statuses every 2 minutes (only when donations tab is active)
   useEffect(() => {
-    if (!user) return;
+    if (!user || activeTab !== "donations") return;
     const interval = setInterval(() => {
       handleUpdateAllStatuses();
     }, 120000); // 2 minutes in milliseconds
 
     return () => clearInterval(interval);
-  }, [user, donations]);
+  }, [user, donations, activeTab]);
   const fetchAllServidorMods = async () => {
     try {
       const {
@@ -675,6 +676,7 @@ const Admin = () => {
                 defaultValue="donations" 
                 className="w-full"
                 onValueChange={(value) => {
+                  setActiveTab(value);
                   if (value === "streamers" && !streamersLoaded) {
                     fetchStreamers();
                     setStreamersLoaded(true);
