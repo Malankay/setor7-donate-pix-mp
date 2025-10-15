@@ -52,6 +52,8 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
     return "";
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openDataInicio, setOpenDataInicio] = useState(false);
+  const [openDataFim, setOpenDataFim] = useState(false);
 
   const formatCurrency = (value: string) => {
     const numbers = value.replace(/\D/g, "");
@@ -151,7 +153,7 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
 
       <div>
         <Label>Data de Início *</Label>
-        <Popover>
+        <Popover open={openDataInicio} onOpenChange={setOpenDataInicio}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -168,7 +170,10 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
             <Calendar
               mode="single"
               selected={dataInicio}
-              onSelect={setDataInicio}
+              onSelect={(date) => {
+                setDataInicio(date);
+                setOpenDataInicio(false);
+              }}
               initialFocus
             />
           </PopoverContent>
@@ -177,7 +182,7 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
 
       <div>
         <Label>Data de Fim *</Label>
-        <Popover>
+        <Popover open={openDataFim} onOpenChange={setOpenDataFim}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -194,7 +199,10 @@ export function StreamerCampaignForm({ streamerId, campaign, onSuccess, onCancel
             <Calendar
               mode="single"
               selected={dataFim}
-              onSelect={setDataFim}
+              onSelect={(date) => {
+                setDataFim(date);
+                setOpenDataFim(false);
+              }}
               initialFocus
               disabled={(date) => dataInicio ? date < dataInicio : false}
             />
