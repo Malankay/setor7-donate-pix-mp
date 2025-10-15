@@ -175,9 +175,14 @@ const DonationForm = () => {
                 alt="Setor 7 Logo"
                 className="w-48 h-48 object-contain rounded-lg"
               />
-              <p className="text-2xl font-bold text-center">
-                Pagamento aprovado.
-              </p>
+              <div className="text-center space-y-4">
+                <p className="text-2xl font-bold">
+                  Pagamento aprovado.
+                </p>
+                <p className="text-base text-muted-foreground px-4">
+                  Muito obrigado por apoiar o Setor 7 Hardcode PVE, agradecemos sua presença em nosso servidor e bom jogo
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
