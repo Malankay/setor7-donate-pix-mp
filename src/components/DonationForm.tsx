@@ -165,6 +165,25 @@ const DonationForm = () => {
   };
 
   if (showQrCode) {
+    if (paymentApproved) {
+      return (
+        <Card className="w-full max-w-md donation-card">
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center space-y-6">
+              <img 
+                src="/src/assets/logoSetor7.jpg"
+                alt="Setor 7 Logo"
+                className="w-48 h-48 object-contain rounded-lg"
+              />
+              <p className="text-2xl font-bold text-center">
+                Pagamento aprovado.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
       <Card className="w-full max-w-md donation-card">
         <CardHeader className="text-center">
@@ -211,15 +230,9 @@ const DonationForm = () => {
             </Button>
           </div>
           <div className="text-center pt-4 border-t border-border">
-            {paymentApproved ? (
-              <p className="text-lg font-semibold text-green-500">
-                ✅ Pagamento Aprovado! Muito obrigado, {formData.name}! 🎮
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Aguardando pagamento... Obrigado pelo apoio, {formData.name}! 🎮
-              </p>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Aguardando pagamento... Obrigado pelo apoio, {formData.name}! 🎮
+            </p>
           </div>
         </CardContent>
       </Card>
