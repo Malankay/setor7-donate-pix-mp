@@ -14,6 +14,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
 import { ServerForm } from "@/components/ServerForm";
 import { SecretsManager } from "@/components/SecretsManager";
+import { StreamerForm } from "@/components/StreamerForm";
 interface Donation {
   id: string;
   payment_id: string;
@@ -50,6 +51,17 @@ interface ServidorMod {
   loja_steam: string | null;
   valor_mensal: number;
 }
+
+interface Streamer {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string | null;
+  youtube: string | null;
+  instagram: string | null;
+  facebook: string | null;
+  created_at: string;
+}
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -77,6 +89,11 @@ const Admin = () => {
   const [cancellingDonation, setCancellingDonation] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [streamers, setStreamers] = useState<Streamer[]>([]);
+  const [editingStreamer, setEditingStreamer] = useState<Streamer | null>(null);
+  const [showAddStreamerDialog, setShowAddStreamerDialog] = useState(false);
+  const [showEditStreamerDialog, setShowEditStreamerDialog] = useState(false);
+  const [streamerToDelete, setStreamerToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
   const {
     toast
@@ -112,6 +129,7 @@ const Admin = () => {
       fetchUsers();
       fetchServidores();
       fetchAllServidorMods();
+      fetchStreamers();
     }
   }, [user]);
 
@@ -245,6 +263,54 @@ const Admin = () => {
       setLoading(false);
     }
   };
+  const fetchStreamers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("streamers")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      setStreamers(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar streamers",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditStreamer = (streamer: Streamer) => {
+    setEditingStreamer(streamer);
+    setShowEditStreamerDialog(true);
+  };
+
+  const handleDeleteStreamer = async (streamerId: string) => {
+    try {
+      const { error } = await supabase
+        .from("streamers")
+        .delete()
+        .eq("id", streamerId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Streamer deletado",
+        description: "O streamer foi removido com sucesso.",
+      });
+      
+      setStreamerToDelete(null);
+      fetchStreamers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar streamer",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
@@ -436,10 +502,11 @@ const Admin = () => {
             <Card className="backdrop-blur-sm bg-card/50 border-border/50">
               <Tabs defaultValue="donations" className="w-full">
                 <CardHeader>
-                  <TabsList className="grid w-full grid-cols-5">
+                  <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="donations">Doações</TabsTrigger>
                     <TabsTrigger value="users">Usuários</TabsTrigger>
                     <TabsTrigger value="servers">Servidores</TabsTrigger>
+                    <TabsTrigger value="streamers">Streamers</TabsTrigger>
                     <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
                     <TabsTrigger value="secrets">Secrets</TabsTrigger>
                   </TabsList>
@@ -612,6 +679,93 @@ const Admin = () => {
                       </div> : <div className="text-center py-8 text-muted-foreground">
                         Nenhum servidor cadastrado ainda. Clique em "Cadastrar Servidor" para adicionar o primeiro.
                       </div>}
+                  </CardContent>
+                </TabsContent>
+
+                <TabsContent value="streamers">
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Streamers Cadastrados</CardTitle>
+                        <CardDescription>
+                          Total de {streamers.length} streamer(s) cadastrado(s)
+                        </CardDescription>
+                      </div>
+                      <Button onClick={() => setShowAddStreamerDialog(true)} className="gap-2 bg-red-900 hover:bg-red-800 text-white">
+                        <Plus className="h-4 w-4" />
+                        Adicionar Streamer
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {streamers.length > 0 ? (
+                      <div className="rounded-md border border-border/50">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nome</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Telefone</TableHead>
+                              <TableHead>Redes Sociais</TableHead>
+                              <TableHead>Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {streamers.map((streamer) => (
+                              <TableRow key={streamer.id}>
+                                <TableCell className="font-medium">{streamer.nome}</TableCell>
+                                <TableCell>{streamer.email}</TableCell>
+                                <TableCell>{streamer.telefone || "-"}</TableCell>
+                                <TableCell>
+                                  <div className="flex gap-2">
+                                    {streamer.youtube && (
+                                      <a href={streamer.youtube} target="_blank" rel="noopener noreferrer" className="text-red-500 hover:text-red-600">
+                                        YouTube
+                                      </a>
+                                    )}
+                                    {streamer.instagram && (
+                                      <a href={streamer.instagram} target="_blank" rel="noopener noreferrer" className="text-pink-500 hover:text-pink-600">
+                                        Instagram
+                                      </a>
+                                    )}
+                                    {streamer.facebook && (
+                                      <a href={streamer.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-600">
+                                        Facebook
+                                      </a>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex gap-2">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => handleEditStreamer(streamer)} 
+                                      className="text-white hover:text-white hover:bg-accent/10"
+                                    >
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      Editar
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => setStreamerToDelete(streamer.id)} 
+                                      className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhum streamer cadastrado ainda. Clique em "Adicionar Streamer" para adicionar o primeiro.
+                      </div>
+                    )}
                   </CardContent>
                 </TabsContent>
 
@@ -1155,6 +1309,73 @@ const Admin = () => {
               </div>}
           </DialogContent>
         </Dialog>
+
+        {/* Add Streamer Dialog */}
+        <Dialog open={showAddStreamerDialog} onOpenChange={setShowAddStreamerDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Adicionar Streamer</DialogTitle>
+              <DialogDescription>
+                Cadastre um novo streamer no sistema
+              </DialogDescription>
+            </DialogHeader>
+            <StreamerForm 
+              onSuccess={() => {
+                toast({
+                  title: "Sucesso",
+                  description: "Streamer cadastrado com sucesso!",
+                });
+                fetchStreamers();
+                setShowAddStreamerDialog(false);
+              }} 
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Streamer Dialog */}
+        <Dialog open={showEditStreamerDialog} onOpenChange={setShowEditStreamerDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Editar Streamer</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do streamer
+              </DialogDescription>
+            </DialogHeader>
+            <StreamerForm 
+              streamer={editingStreamer || undefined}
+              onSuccess={() => {
+                toast({
+                  title: "Sucesso",
+                  description: "Streamer atualizado com sucesso!",
+                });
+                fetchStreamers();
+                setShowEditStreamerDialog(false);
+                setEditingStreamer(null);
+              }} 
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Streamer Alert Dialog */}
+        <AlertDialog open={!!streamerToDelete} onOpenChange={() => setStreamerToDelete(null)}>
+          <AlertDialogContent className="backdrop-blur-sm bg-card/95">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este streamer? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => streamerToDelete && handleDeleteStreamer(streamerToDelete)}
+                className="bg-red-900 hover:bg-red-800 text-white"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>;
 };

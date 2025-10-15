@@ -214,6 +214,42 @@ export type Database = {
           },
         ]
       }
+      streamers: {
+        Row: {
+          created_at: string
+          email: string
+          facebook: string | null
+          id: string
+          instagram: string | null
+          nome: string
+          telefone: string | null
+          updated_at: string
+          youtube: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+          youtube?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
+          youtube?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
