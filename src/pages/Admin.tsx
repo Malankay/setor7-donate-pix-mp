@@ -114,6 +114,7 @@ const Admin = () => {
   const [editingCoupon, setEditingCoupon] = useState<StreamerCoupon | null>(null);
   const [showEditCouponDialog, setShowEditCouponDialog] = useState(false);
   const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
+  const [streamersLoaded, setStreamersLoaded] = useState(false);
   const navigate = useNavigate();
   const {
     toast
@@ -149,7 +150,6 @@ const Admin = () => {
       fetchUsers();
       fetchServidores();
       fetchAllServidorMods();
-      fetchStreamers();
     }
   }, [user]);
 
@@ -576,7 +576,16 @@ const Admin = () => {
         <section className="py-8 px-4">
           <div className="container mx-auto max-w-7xl">
             <Card className="backdrop-blur-sm bg-card/50 border-border/50">
-              <Tabs defaultValue="donations" className="w-full">
+              <Tabs 
+                defaultValue="donations" 
+                className="w-full"
+                onValueChange={(value) => {
+                  if (value === "streamers" && !streamersLoaded) {
+                    fetchStreamers();
+                    setStreamersLoaded(true);
+                  }
+                }}
+              >
                 <CardHeader>
                   <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="donations">Doações</TabsTrigger>
