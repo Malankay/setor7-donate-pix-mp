@@ -220,6 +220,7 @@ export type Database = {
           created_at: string
           data_fim: string
           data_inicio: string
+          descricao: string | null
           id: string
           nome: string
           porcentagem: number | null
@@ -232,6 +233,7 @@ export type Database = {
           created_at?: string
           data_fim: string
           data_inicio: string
+          descricao?: string | null
           id?: string
           nome: string
           porcentagem?: number | null
@@ -244,6 +246,7 @@ export type Database = {
           created_at?: string
           data_fim?: string
           data_inicio?: string
+          descricao?: string | null
           id?: string
           nome?: string
           porcentagem?: number | null

@@ -10,6 +10,7 @@ interface StreamerCoupon {
   streamer_id: string;
   nome: string;
   codigo: string;
+  descricao: string | null;
   data_inicio: string;
   data_fim: string;
   valor: number | null;
@@ -26,6 +27,7 @@ interface StreamerCouponFormProps {
 export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: StreamerCouponFormProps) {
   const [nome, setNome] = useState(coupon?.nome || "");
   const [codigo, setCodigo] = useState(coupon?.codigo || "");
+  const [descricao, setDescricao] = useState(coupon?.descricao || "");
   const [dataInicio, setDataInicio] = useState(coupon?.data_inicio?.split('T')[0] || "");
   const [dataFim, setDataFim] = useState(coupon?.data_fim?.split('T')[0] || "");
   const [valor, setValor] = useState(coupon?.valor?.toString() || "");
@@ -57,6 +59,7 @@ export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: 
         streamer_id: streamerId,
         nome,
         codigo,
+        descricao: descricao || null,
         data_inicio: new Date(dataInicio).toISOString(),
         data_fim: new Date(dataFim).toISOString(),
         valor: valor ? parseFloat(valor) : null,
@@ -122,6 +125,16 @@ export function StreamerCouponForm({ streamerId, coupon, onSuccess, onCancel }: 
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
           required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="descricao">Descrição</Label>
+        <Input
+          id="descricao"
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          placeholder="Descrição do cupom (opcional)"
         />
       </div>
 

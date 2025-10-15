@@ -69,6 +69,7 @@ interface StreamerCoupon {
   streamer_id: string;
   nome: string;
   codigo: string;
+  descricao: string | null;
   data_inicio: string;
   data_fim: string;
   valor: number | null;
@@ -1483,6 +1484,7 @@ const Admin = () => {
                       <TableRow>
                         <TableHead>Nome</TableHead>
                         <TableHead>Código</TableHead>
+                        <TableHead>Descrição</TableHead>
                         <TableHead>Início</TableHead>
                         <TableHead>Fim</TableHead>
                         <TableHead>Valor</TableHead>
@@ -1495,6 +1497,7 @@ const Admin = () => {
                         <TableRow key={coupon.id}>
                           <TableCell className="font-medium">{coupon.nome}</TableCell>
                           <TableCell className="font-mono">{coupon.codigo}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{coupon.descricao || "-"}</TableCell>
                           <TableCell>{new Date(coupon.data_inicio).toLocaleDateString('pt-BR')}</TableCell>
                           <TableCell>{new Date(coupon.data_fim).toLocaleDateString('pt-BR')}</TableCell>
                           <TableCell>{coupon.valor ? formatCurrency(coupon.valor) : "-"}</TableCell>
