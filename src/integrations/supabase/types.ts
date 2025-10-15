@@ -316,6 +316,7 @@ export type Database = {
           id: string
           instagram: string | null
           nome: string
+          steam_id: string | null
           telefone: string | null
           updated_at: string
           youtube: string | null
@@ -327,6 +328,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           nome: string
+          steam_id?: string | null
           telefone?: string | null
           updated_at?: string
           youtube?: string | null
@@ -338,6 +340,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           nome?: string
+          steam_id?: string | null
           telefone?: string | null
           updated_at?: string
           youtube?: string | null

@@ -11,6 +11,7 @@ interface StreamerFormData {
   nome: string;
   email: string;
   telefone: string;
+  steam_id: string;
   youtube: string;
   instagram: string;
   facebook: string;
@@ -21,6 +22,7 @@ interface Streamer {
   nome: string;
   email: string;
   telefone: string | null;
+  steam_id: string | null;
   youtube: string | null;
   instagram: string | null;
   facebook: string | null;
@@ -40,6 +42,7 @@ export function StreamerForm({ streamer, onSuccess }: StreamerFormProps) {
       nome: "",
       email: "",
       telefone: "",
+      steam_id: "",
       youtube: "",
       instagram: "",
       facebook: "",
@@ -52,6 +55,7 @@ export function StreamerForm({ streamer, onSuccess }: StreamerFormProps) {
         nome: streamer.nome,
         email: streamer.email,
         telefone: streamer.telefone || "",
+        steam_id: streamer.steam_id || "",
         youtube: streamer.youtube || "",
         instagram: streamer.instagram || "",
         facebook: streamer.facebook || "",
@@ -61,6 +65,7 @@ export function StreamerForm({ streamer, onSuccess }: StreamerFormProps) {
         nome: "",
         email: "",
         telefone: "",
+        steam_id: "",
         youtube: "",
         instagram: "",
         facebook: "",
@@ -76,6 +81,7 @@ export function StreamerForm({ streamer, onSuccess }: StreamerFormProps) {
         nome: data.nome,
         email: data.email,
         telefone: data.telefone || null,
+        steam_id: data.steam_id || null,
         youtube: data.youtube || null,
         instagram: data.instagram || null,
         facebook: data.facebook || null,
@@ -156,6 +162,15 @@ export function StreamerForm({ streamer, onSuccess }: StreamerFormProps) {
           id="telefone"
           {...register("telefone")}
           placeholder="(00) 00000-0000"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="steam_id">Steam ID</Label>
+        <Input
+          id="steam_id"
+          {...register("steam_id")}
+          placeholder="Steam ID do streamer"
         />
       </div>
 
