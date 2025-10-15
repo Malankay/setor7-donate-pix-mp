@@ -41,19 +41,23 @@ serve(async (req) => {
     // Verificar e aplicar cupom de desconto se fornecido
     let finalAmount = parseFloat(amount);
     let appliedDiscount = 0;
+    let couponCode = null;
+    let discountValue = 0;
     
     if (discountCoupon) {
       const { data: couponData, error: couponError } = await supabaseClient
         .from('discount_coupons')
-        .select('discount_percentage, active')
+        .select('discount_percentage, active, code')
         .eq('code', discountCoupon.toUpperCase())
         .eq('active', true)
         .maybeSingle();
       
       if (couponData) {
         appliedDiscount = couponData.discount_percentage;
+        couponCode = couponData.code;
+        discountValue = parseFloat(amount) * (appliedDiscount / 100);
         finalAmount = finalAmount * (1 - appliedDiscount / 100);
-        console.log(`Cupom aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}%`);
+        console.log(`Cupom aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}% - Valor: ${discountValue}`);
       } else {
         console.log('Cupom inválido ou inativo:', discountCoupon);
       }
@@ -96,6 +100,9 @@ serve(async (req) => {
       metadata: {
         steam_id: steamId || '',
         phone: phone || '',
+        coupon_code: couponCode || '',
+        coupon_percentage: appliedDiscount || 0,
+        coupon_discount_value: discountValue || 0,
       },
     };
 
