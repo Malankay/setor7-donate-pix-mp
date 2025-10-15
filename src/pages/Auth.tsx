@@ -20,7 +20,7 @@ const Auth = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/admin");
+        navigate("/painel");
       }
     };
     checkUser();
@@ -38,7 +38,7 @@ const Auth = () => {
 
       if (error) throw error;
 
-      navigate("/admin");
+      navigate("/painel");
     } catch (error: any) {
       toast({
         title: "Erro ao fazer login",
