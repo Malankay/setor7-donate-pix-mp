@@ -1201,18 +1201,49 @@ const Admin = () => {
                         <div>
                           <p className="text-lg font-medium text-muted-foreground">Saldo do Mês</p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Valor Total Recebido - Custo Mensal Servidores
+                            Valor Total Recebido - Custo Mensal Servidores - Total em Campanhas
                           </p>
                         </div>
                         <div className="text-right">
-                          <div className={`text-3xl font-bold ${donations.filter(d => {
-                          const donationDate = new Date(d.created_at);
-                          return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
-                        }).reduce((sum, d) => sum + d.amount, 0) - (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {formatCurrency(donations.filter(d => {
-                            const donationDate = new Date(d.created_at);
-                            return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
-                          }).reduce((sum, d) => sum + d.amount, 0) - (servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0)))}
+                          <div className={`text-3xl font-bold ${(() => {
+                            const totalRecebido = donations.filter(d => {
+                              const donationDate = new Date(d.created_at);
+                              return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                            }).reduce((sum, d) => sum + d.amount, 0);
+                            
+                            const totalServidores = servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0);
+                            
+                            const totalCampanhas = allCampaigns.filter(c => {
+                              const now = new Date();
+                              const inicio = new Date(c.data_inicio);
+                              const fim = new Date(c.data_fim);
+                              return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
+                                     fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
+                                     (inicio <= now && fim >= now);
+                            }).reduce((sum, c) => sum + c.valor, 0);
+                            
+                            const saldo = totalRecebido - totalServidores - totalCampanhas;
+                            return saldo >= 0 ? 'text-green-500' : 'text-red-500';
+                          })()}`}>
+                            {formatCurrency((() => {
+                              const totalRecebido = donations.filter(d => {
+                                const donationDate = new Date(d.created_at);
+                                return d.status === 'approved' && donationDate.getMonth() === selectedMonth && donationDate.getFullYear() === selectedYear;
+                              }).reduce((sum, d) => sum + d.amount, 0);
+                              
+                              const totalServidores = servidores.reduce((sum, s) => sum + s.valor_mensal, 0) + allServidorMods.reduce((sum, m) => sum + m.valor_mensal, 0);
+                              
+                              const totalCampanhas = allCampaigns.filter(c => {
+                                const now = new Date();
+                                const inicio = new Date(c.data_inicio);
+                                const fim = new Date(c.data_fim);
+                                return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
+                                       fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
+                                       (inicio <= now && fim >= now);
+                              }).reduce((sum, c) => sum + c.valor, 0);
+                              
+                              return totalRecebido - totalServidores - totalCampanhas;
+                            })())}
                           </div>
                         </div>
                       </div>
