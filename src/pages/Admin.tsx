@@ -16,6 +16,7 @@ import { ServerForm } from "@/components/ServerForm";
 import { SecretsManager } from "@/components/SecretsManager";
 import { StreamerForm } from "@/components/StreamerForm";
 import { StreamerCouponForm } from "@/components/StreamerCouponForm";
+import { StreamerCampaignForm } from "@/components/StreamerCampaignForm";
 interface Donation {
   id: string;
   payment_id: string;
@@ -76,6 +77,17 @@ interface StreamerCoupon {
   porcentagem: number | null;
   created_at: string;
 }
+
+interface StreamerCampaign {
+  id: string;
+  streamer_id: string;
+  nome: string;
+  descricao: string | null;
+  data_inicio: string;
+  data_fim: string;
+  valor: number;
+  created_at: string;
+}
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -115,6 +127,13 @@ const Admin = () => {
   const [showEditCouponDialog, setShowEditCouponDialog] = useState(false);
   const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
   const [streamersLoaded, setStreamersLoaded] = useState(false);
+  const [selectedStreamerForCampaigns, setSelectedStreamerForCampaigns] = useState<string | null>(null);
+  const [streamerCampaigns, setStreamerCampaigns] = useState<StreamerCampaign[]>([]);
+  const [showAddCampaignDialog, setShowAddCampaignDialog] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<StreamerCampaign | null>(null);
+  const [showEditCampaignDialog, setShowEditCampaignDialog] = useState(false);
+  const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
+  const [allCampaigns, setAllCampaigns] = useState<StreamerCampaign[]>([]);
   const navigate = useNavigate();
   const {
     toast
@@ -150,6 +169,7 @@ const Admin = () => {
       fetchUsers();
       fetchServidores();
       fetchAllServidorMods();
+      fetchAllCampaigns();
     }
   }, [user]);
 
@@ -344,6 +364,81 @@ const Admin = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar cupons",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchAllCampaigns = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("streamer_campanhas")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      setAllCampaigns(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar campanhas",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchStreamerCampaigns = async (streamerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("streamer_campanhas")
+        .select("*")
+        .eq("streamer_id", streamerId)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      setStreamerCampaigns(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar campanhas",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleManageCampaigns = (streamerId: string) => {
+    setSelectedStreamerForCampaigns(streamerId);
+    fetchStreamerCampaigns(streamerId);
+  };
+
+  const handleEditCampaign = (campaign: StreamerCampaign) => {
+    setEditingCampaign(campaign);
+    setShowEditCampaignDialog(true);
+  };
+
+  const handleDeleteCampaign = async (campaignId: string) => {
+    try {
+      const { error } = await supabase
+        .from("streamer_campanhas")
+        .delete()
+        .eq("id", campaignId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Campanha deletada",
+        description: "A campanha foi removida com sucesso.",
+      });
+      
+      setCampaignToDelete(null);
+      if (selectedStreamerForCampaigns) {
+        fetchStreamerCampaigns(selectedStreamerForCampaigns);
+      }
+      fetchAllCampaigns();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar campanha",
         description: error.message,
         variant: "destructive",
       });
@@ -825,6 +920,15 @@ const Admin = () => {
                                     <Button 
                                       variant="outline" 
                                       size="sm" 
+                                      onClick={() => handleManageCampaigns(streamer.id)} 
+                                      className="gap-1"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                      Campanhas
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
                                       onClick={() => handleManageCoupons(streamer.id)} 
                                       className="gap-1"
                                     >
@@ -992,7 +1096,105 @@ const Admin = () => {
                           <p className="text-xs text-muted-foreground mt-2">Clique para ver detalhes</p>
                         </CardContent>
                       </Card>
+
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Total em Campanhas
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-blue-500">
+                            {formatCurrency(allCampaigns.filter(c => {
+                              const now = new Date();
+                              const inicio = new Date(c.data_inicio);
+                              const fim = new Date(c.data_fim);
+                              return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
+                                     fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
+                                     (inicio <= now && fim >= now);
+                            }).reduce((sum, c) => sum + c.valor, 0))}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">Campanhas ativas no período</p>
+                        </CardContent>
+                      </Card>
+
+                      <Card className="bg-card/50">
+                        <CardHeader>
+                          <CardTitle className="text-sm font-medium text-muted-foreground">
+                            Campanhas Ativas
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-blue-400">
+                            {allCampaigns.filter(c => {
+                              const now = new Date();
+                              const inicio = new Date(c.data_inicio);
+                              const fim = new Date(c.data_fim);
+                              return inicio <= now && fim >= now;
+                            }).length}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">No momento</p>
+                        </CardContent>
+                      </Card>
                     </div>
+
+                    {/* Detalhamento de Campanhas */}
+                    {allCampaigns.filter(c => {
+                      const now = new Date();
+                      const inicio = new Date(c.data_inicio);
+                      const fim = new Date(c.data_fim);
+                      return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
+                             fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
+                             (inicio <= now && fim >= now);
+                    }).length > 0 && (
+                      <div className="mt-6">
+                        <h3 className="text-lg font-semibold mb-4">Campanhas do Período</h3>
+                        <div className="rounded-md border border-border/50">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Nome</TableHead>
+                                <TableHead>Descrição</TableHead>
+                                <TableHead>Início</TableHead>
+                                <TableHead>Fim</TableHead>
+                                <TableHead>Valor</TableHead>
+                                <TableHead>Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {allCampaigns.filter(c => {
+                                const now = new Date();
+                                const inicio = new Date(c.data_inicio);
+                                const fim = new Date(c.data_fim);
+                                return inicio.getMonth() === selectedMonth && inicio.getFullYear() === selectedYear ||
+                                       fim.getMonth() === selectedMonth && fim.getFullYear() === selectedYear ||
+                                       (inicio <= now && fim >= now);
+                              }).map((campaign) => {
+                                const now = new Date();
+                                const inicio = new Date(campaign.data_inicio);
+                                const fim = new Date(campaign.data_fim);
+                                const isActive = inicio <= now && fim >= now;
+                                
+                                return (
+                                  <TableRow key={campaign.id}>
+                                    <TableCell className="font-medium">{campaign.nome}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">{campaign.descricao || "-"}</TableCell>
+                                    <TableCell>{inicio.toLocaleDateString("pt-BR")}</TableCell>
+                                    <TableCell>{fim.toLocaleDateString("pt-BR")}</TableCell>
+                                    <TableCell className="font-semibold text-accent">{formatCurrency(campaign.valor)}</TableCell>
+                                    <TableCell>
+                                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${isActive ? "bg-green-500/20 text-green-400" : "bg-gray-500/20 text-gray-400"}`}>
+                                        {isActive ? "Ativa" : "Finalizada"}
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="mt-6 p-6 bg-card/50 border-2 border-accent/50 rounded-lg">
                       <div className="flex justify-between items-center">
@@ -1607,6 +1809,149 @@ const Admin = () => {
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => couponToDelete && handleDeleteCoupon(couponToDelete)}
+                className="bg-red-900 hover:bg-red-800 text-white"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Manage Campaigns Dialog */}
+        <Dialog open={!!selectedStreamerForCampaigns} onOpenChange={() => setSelectedStreamerForCampaigns(null)}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Gerenciar Campanhas do Streamer</DialogTitle>
+              <DialogDescription>
+                Adicione, edite ou remova campanhas deste streamer
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <Button onClick={() => setShowAddCampaignDialog(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Adicionar Campanha
+              </Button>
+
+              {streamerCampaigns.length > 0 ? (
+                <div className="rounded-md border border-border/50">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Descrição</TableHead>
+                        <TableHead>Início</TableHead>
+                        <TableHead>Fim</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {streamerCampaigns.map((campaign) => (
+                        <TableRow key={campaign.id}>
+                          <TableCell className="font-medium">{campaign.nome}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{campaign.descricao || "-"}</TableCell>
+                          <TableCell>{new Date(campaign.data_inicio).toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell>{new Date(campaign.data_fim).toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell className="font-semibold text-accent">{formatCurrency(campaign.valor)}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditCampaign(campaign)} 
+                                className="text-white hover:text-white hover:bg-accent/10"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setCampaignToDelete(campaign.id)} 
+                                className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma campanha cadastrada para este streamer.
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Campaign Dialog */}
+        <Dialog open={showAddCampaignDialog} onOpenChange={setShowAddCampaignDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Adicionar Campanha</DialogTitle>
+              <DialogDescription>
+                Cadastre uma nova campanha para o streamer
+              </DialogDescription>
+            </DialogHeader>
+            {selectedStreamerForCampaigns && (
+              <StreamerCampaignForm 
+                streamerId={selectedStreamerForCampaigns}
+                onSuccess={() => {
+                  setShowAddCampaignDialog(false);
+                  fetchStreamerCampaigns(selectedStreamerForCampaigns);
+                  fetchAllCampaigns();
+                }}
+                onCancel={() => setShowAddCampaignDialog(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Campaign Dialog */}
+        <Dialog open={showEditCampaignDialog} onOpenChange={setShowEditCampaignDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Editar Campanha</DialogTitle>
+              <DialogDescription>
+                Atualize as informações da campanha
+              </DialogDescription>
+            </DialogHeader>
+            {editingCampaign && selectedStreamerForCampaigns && (
+              <StreamerCampaignForm 
+                streamerId={selectedStreamerForCampaigns}
+                campaign={editingCampaign}
+                onSuccess={() => {
+                  setShowEditCampaignDialog(false);
+                  setEditingCampaign(null);
+                  fetchStreamerCampaigns(selectedStreamerForCampaigns);
+                  fetchAllCampaigns();
+                }}
+                onCancel={() => {
+                  setShowEditCampaignDialog(false);
+                  setEditingCampaign(null);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Campaign Alert Dialog */}
+        <AlertDialog open={!!campaignToDelete} onOpenChange={() => setCampaignToDelete(null)}>
+          <AlertDialogContent className="backdrop-blur-sm bg-card/95">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => campaignToDelete && handleDeleteCampaign(campaignToDelete)}
                 className="bg-red-900 hover:bg-red-800 text-white"
               >
                 Excluir
