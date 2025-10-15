@@ -25,6 +25,8 @@ const DonationForm = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [paymentApproved, setPaymentApproved] = useState(false);
+  const [couponError, setCouponError] = useState<string>("");
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
   const formatCurrency = (value: string) => {
     // Remove tudo exceto números
@@ -59,8 +61,56 @@ const DonationForm = () => {
     } else if (name === "phone") {
       const formatted = formatPhone(value);
       setFormData((prev) => ({ ...prev, [name]: formatted }));
+    } else if (name === "discountCoupon") {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      setCouponError("");
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const validateCoupon = async (couponCode: string): Promise<boolean> => {
+    if (!couponCode.trim()) {
+      return true; // Cupom vazio é válido (não obrigatório)
+    }
+
+    setIsValidatingCoupon(true);
+    setCouponError("");
+
+    try {
+      const { data: coupon, error } = await supabase
+        .from("streamer_coupons")
+        .select("*")
+        .eq("codigo", couponCode)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!coupon) {
+        setCouponError("Cupom não encontrado");
+        setIsValidatingCoupon(false);
+        return false;
+      }
+
+      // Verificar se está dentro da validade
+      const now = new Date();
+      const dataInicio = new Date(coupon.data_inicio);
+      const dataFim = new Date(coupon.data_fim);
+
+      if (now < dataInicio || now > dataFim) {
+        const dataFimFormatada = dataFim.toLocaleDateString("pt-BR");
+        setCouponError(`Cupom fora da validade: ${dataFimFormatada}`);
+        setIsValidatingCoupon(false);
+        return false;
+      }
+
+      setIsValidatingCoupon(false);
+      return true;
+    } catch (error) {
+      console.error("Erro ao validar cupom:", error);
+      setCouponError("Erro ao validar cupom");
+      setIsValidatingCoupon(false);
+      return false;
     }
   };
 
@@ -84,10 +134,20 @@ const DonationForm = () => {
     return true;
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
+
+    // Validar cupom se foi preenchido
+    if (formData.discountCoupon) {
+      const couponValid = await validateCoupon(formData.discountCoupon);
+      if (!couponValid) {
+        toast.error(couponError || "Cupom inválido");
+        return;
+      }
+    }
 
     setIsLoading(true);
 
@@ -331,11 +391,15 @@ const DonationForm = () => {
               value={formData.discountCoupon}
               onChange={handleChange}
               placeholder="Digite seu cupom"
+              className={couponError ? "border-red-500" : ""}
             />
+            {couponError && (
+              <p className="text-sm text-red-500">{couponError}</p>
+            )}
           </div>
 
-          <Button type="submit" className="w-full donate-button" disabled={isLoading}>
-            {isLoading ? "Gerando QR Code..." : "Doar via PIX"}
+          <Button type="submit" className="w-full donate-button" disabled={isLoading || isValidatingCoupon}>
+            {isLoading ? "Gerando QR Code..." : isValidatingCoupon ? "Validando cupom..." : "Doar via PIX"}
           </Button>
         </form>
       </CardContent>
