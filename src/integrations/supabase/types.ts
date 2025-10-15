@@ -214,6 +214,53 @@ export type Database = {
           },
         ]
       }
+      streamer_coupons: {
+        Row: {
+          codigo: string
+          created_at: string
+          data_fim: string
+          data_inicio: string
+          id: string
+          nome: string
+          porcentagem: number | null
+          streamer_id: string
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          data_fim: string
+          data_inicio: string
+          id?: string
+          nome: string
+          porcentagem?: number | null
+          streamer_id: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          data_fim?: string
+          data_inicio?: string
+          id?: string
+          nome?: string
+          porcentagem?: number | null
+          streamer_id?: string
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streamer_coupons_streamer_id_fkey"
+            columns: ["streamer_id"]
+            isOneToOne: false
+            referencedRelation: "streamers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streamers: {
         Row: {
           created_at: string

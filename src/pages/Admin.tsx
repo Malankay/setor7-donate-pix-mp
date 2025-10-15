@@ -15,6 +15,7 @@ import { AddUserDialog, EditUserDialog } from "@/components/UserDialogs";
 import { ServerForm } from "@/components/ServerForm";
 import { SecretsManager } from "@/components/SecretsManager";
 import { StreamerForm } from "@/components/StreamerForm";
+import { StreamerCouponForm } from "@/components/StreamerCouponForm";
 interface Donation {
   id: string;
   payment_id: string;
@@ -62,6 +63,18 @@ interface Streamer {
   facebook: string | null;
   created_at: string;
 }
+
+interface StreamerCoupon {
+  id: string;
+  streamer_id: string;
+  nome: string;
+  codigo: string;
+  data_inicio: string;
+  data_fim: string;
+  valor: number | null;
+  porcentagem: number | null;
+  created_at: string;
+}
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -94,6 +107,12 @@ const Admin = () => {
   const [showAddStreamerDialog, setShowAddStreamerDialog] = useState(false);
   const [showEditStreamerDialog, setShowEditStreamerDialog] = useState(false);
   const [streamerToDelete, setStreamerToDelete] = useState<string | null>(null);
+  const [selectedStreamerForCoupons, setSelectedStreamerForCoupons] = useState<string | null>(null);
+  const [streamerCoupons, setStreamerCoupons] = useState<StreamerCoupon[]>([]);
+  const [showAddCouponDialog, setShowAddCouponDialog] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState<StreamerCoupon | null>(null);
+  const [showEditCouponDialog, setShowEditCouponDialog] = useState(false);
+  const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
   const navigate = useNavigate();
   const {
     toast
@@ -305,6 +324,62 @@ const Admin = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao deletar streamer",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchStreamerCoupons = async (streamerId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("streamer_coupons")
+        .select("*")
+        .eq("streamer_id", streamerId)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      setStreamerCoupons(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar cupons",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleManageCoupons = (streamerId: string) => {
+    setSelectedStreamerForCoupons(streamerId);
+    fetchStreamerCoupons(streamerId);
+  };
+
+  const handleEditCoupon = (coupon: StreamerCoupon) => {
+    setEditingCoupon(coupon);
+    setShowEditCouponDialog(true);
+  };
+
+  const handleDeleteCoupon = async (couponId: string) => {
+    try {
+      const { error } = await supabase
+        .from("streamer_coupons")
+        .delete()
+        .eq("id", couponId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Cupom deletado",
+        description: "O cupom foi removido com sucesso.",
+      });
+      
+      setCouponToDelete(null);
+      if (selectedStreamerForCoupons) {
+        fetchStreamerCoupons(selectedStreamerForCoupons);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar cupom",
         description: error.message,
         variant: "destructive",
       });
@@ -701,13 +776,13 @@ const Admin = () => {
                     {streamers.length > 0 ? (
                       <div className="rounded-md border border-border/50">
                         <Table>
-                          <TableHeader>
+                            <TableHeader>
                             <TableRow>
                               <TableHead>Nome</TableHead>
                               <TableHead>Email</TableHead>
                               <TableHead>Telefone</TableHead>
                               <TableHead>Redes Sociais</TableHead>
-                              <TableHead>Ações</TableHead>
+                              <TableHead className="text-right">Ações</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -735,16 +810,24 @@ const Admin = () => {
                                     )}
                                   </div>
                                 </TableCell>
-                                <TableCell>
-                                  <div className="flex gap-2">
+                                <TableCell className="text-right">
+                                  <div className="flex gap-2 justify-end">
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      onClick={() => handleManageCoupons(streamer.id)} 
+                                      className="gap-1"
+                                    >
+                                      <Plus className="h-4 w-4" />
+                                      Cupons
+                                    </Button>
                                     <Button 
                                       variant="ghost" 
                                       size="sm" 
                                       onClick={() => handleEditStreamer(streamer)} 
                                       className="text-white hover:text-white hover:bg-accent/10"
                                     >
-                                      <Edit className="h-4 w-4 mr-1" />
-                                      Editar
+                                      <Edit className="h-4 w-4" />
                                     </Button>
                                     <Button 
                                       variant="ghost" 
@@ -1369,6 +1452,149 @@ const Admin = () => {
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => streamerToDelete && handleDeleteStreamer(streamerToDelete)}
+                className="bg-red-900 hover:bg-red-800 text-white"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Manage Coupons Dialog */}
+        <Dialog open={!!selectedStreamerForCoupons} onOpenChange={() => setSelectedStreamerForCoupons(null)}>
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Gerenciar Cupons do Streamer</DialogTitle>
+              <DialogDescription>
+                Adicione, edite ou remova cupons deste streamer
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <Button onClick={() => setShowAddCouponDialog(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Adicionar Cupom
+              </Button>
+
+              {streamerCoupons.length > 0 ? (
+                <div className="rounded-md border border-border/50">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Início</TableHead>
+                        <TableHead>Fim</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Porcentagem</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {streamerCoupons.map((coupon) => (
+                        <TableRow key={coupon.id}>
+                          <TableCell className="font-medium">{coupon.nome}</TableCell>
+                          <TableCell className="font-mono">{coupon.codigo}</TableCell>
+                          <TableCell>{new Date(coupon.data_inicio).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell>{new Date(coupon.data_fim).toLocaleDateString('pt-BR')}</TableCell>
+                          <TableCell>{coupon.valor ? formatCurrency(coupon.valor) : "-"}</TableCell>
+                          <TableCell>{coupon.porcentagem ? `${coupon.porcentagem}%` : "-"}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleEditCoupon(coupon)} 
+                                className="text-white hover:text-white hover:bg-accent/10"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setCouponToDelete(coupon.id)} 
+                                className="h-8 w-8 p-0 bg-red-900 hover:bg-red-800 text-white"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum cupom cadastrado para este streamer.
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Coupon Dialog */}
+        <Dialog open={showAddCouponDialog} onOpenChange={setShowAddCouponDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Adicionar Cupom</DialogTitle>
+              <DialogDescription>
+                Cadastre um novo cupom para o streamer
+              </DialogDescription>
+            </DialogHeader>
+            {selectedStreamerForCoupons && (
+              <StreamerCouponForm 
+                streamerId={selectedStreamerForCoupons}
+                onSuccess={() => {
+                  setShowAddCouponDialog(false);
+                  fetchStreamerCoupons(selectedStreamerForCoupons);
+                }}
+                onCancel={() => setShowAddCouponDialog(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Coupon Dialog */}
+        <Dialog open={showEditCouponDialog} onOpenChange={setShowEditCouponDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Editar Cupom</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do cupom
+              </DialogDescription>
+            </DialogHeader>
+            {editingCoupon && selectedStreamerForCoupons && (
+              <StreamerCouponForm 
+                streamerId={selectedStreamerForCoupons}
+                coupon={editingCoupon}
+                onSuccess={() => {
+                  setShowEditCouponDialog(false);
+                  setEditingCoupon(null);
+                  fetchStreamerCoupons(selectedStreamerForCoupons);
+                }}
+                onCancel={() => {
+                  setShowEditCouponDialog(false);
+                  setEditingCoupon(null);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Coupon Alert Dialog */}
+        <AlertDialog open={!!couponToDelete} onOpenChange={() => setCouponToDelete(null)}>
+          <AlertDialogContent className="backdrop-blur-sm bg-card/95">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este cupom? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => couponToDelete && handleDeleteCoupon(couponToDelete)}
                 className="bg-red-900 hover:bg-red-800 text-white"
               >
                 Excluir
