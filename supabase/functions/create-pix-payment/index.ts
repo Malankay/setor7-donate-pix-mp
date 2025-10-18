@@ -38,52 +38,37 @@ serve(async (req) => {
       throw new Error('Mercado Pago Access Token não configurado');
     }
 
-    // Verificar e aplicar cupom de desconto se fornecido
+    // Verificar cupom apenas para registrar informações do streamer
     let finalAmount = parseFloat(amount);
-    let appliedDiscount = 0;
     let couponCode = null;
-    let discountValue = 0;
     let streamerSteamId = null;
     
     if (discountCoupon) {
       // Buscar cupom de streamer primeiro
       const { data: streamerCouponData, error: streamerCouponError } = await supabaseClient
         .from('streamer_coupons')
-        .select('codigo, porcentagem, valor, streamer_id, streamers(steam_id)')
+        .select('codigo, streamer_id, streamers(steam_id)')
         .eq('codigo', discountCoupon.toUpperCase())
         .gte('data_fim', new Date().toISOString())
         .lte('data_inicio', new Date().toISOString())
         .maybeSingle();
       
       if (streamerCouponData) {
-        // Aplicar desconto do cupom de streamer
-        if (streamerCouponData.porcentagem) {
-          appliedDiscount = streamerCouponData.porcentagem;
-          discountValue = parseFloat(amount) * (appliedDiscount / 100);
-          finalAmount = finalAmount * (1 - appliedDiscount / 100);
-        } else if (streamerCouponData.valor) {
-          discountValue = streamerCouponData.valor;
-          finalAmount = Math.max(0, finalAmount - discountValue);
-          appliedDiscount = (discountValue / parseFloat(amount)) * 100;
-        }
         couponCode = streamerCouponData.codigo;
         streamerSteamId = streamerCouponData.streamers?.steam_id || null;
-        console.log(`Cupom de streamer aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}% - Valor: ${discountValue} - Streamer Steam ID: ${streamerSteamId}`);
+        console.log(`Cupom de streamer encontrado: ${discountCoupon} - Streamer Steam ID: ${streamerSteamId}`);
       } else {
         // Se não encontrou cupom de streamer, buscar cupom global
         const { data: couponData, error: couponError } = await supabaseClient
           .from('discount_coupons')
-          .select('discount_percentage, active, code')
+          .select('code, active')
           .eq('code', discountCoupon.toUpperCase())
           .eq('active', true)
           .maybeSingle();
         
         if (couponData) {
-          appliedDiscount = couponData.discount_percentage;
           couponCode = couponData.code;
-          discountValue = parseFloat(amount) * (appliedDiscount / 100);
-          finalAmount = finalAmount * (1 - appliedDiscount / 100);
-          console.log(`Cupom global aplicado: ${discountCoupon} - Desconto: ${appliedDiscount}% - Valor: ${discountValue}`);
+          console.log(`Cupom global encontrado: ${discountCoupon}`);
         } else {
           console.log('Cupom inválido ou inativo:', discountCoupon);
         }
@@ -128,8 +113,6 @@ serve(async (req) => {
         steam_id: steamId || '',
         phone: phone || '',
         coupon_code: couponCode || '',
-        coupon_percentage: appliedDiscount || 0,
-        coupon_discount_value: discountValue || 0,
         streamer_steam_id: streamerSteamId || '',
       },
     };
