@@ -69,7 +69,7 @@ const Index = () => {
               href="https://discord.gg/uaFaNccGR9" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 px-6 py-3 bg-[#5865F2] hover:bg-[#4752C4] text-white rounded-lg transition-colors shadow-lg hover:shadow-xl"
+              className="inline-flex items-center gap-3 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors shadow-lg hover:shadow-xl animate-pulse"
             >
               <DiscordIcon className="w-6 h-6" />
               <span className="font-semibold">Junte-se ao nosso Discord</span>
