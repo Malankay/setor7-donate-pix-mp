@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { QrCode, Skull } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import logoSetor7 from "@/assets/logoSetor7.jpg";
 
 const DonationForm = () => {
   const [formData, setFormData] = useState({
@@ -233,7 +234,7 @@ const DonationForm = () => {
           <CardContent className="py-12">
             <div className="flex flex-col items-center justify-center space-y-6">
               <img 
-                src="/src/assets/logoSetor7.jpg"
+                src={logoSetor7}
                 alt="Setor 7 Logo"
                 className="w-48 h-48 object-contain rounded-lg"
               />
