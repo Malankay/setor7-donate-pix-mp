@@ -236,7 +236,7 @@ const DonationForm = () => {
               <img 
                 src={logoSetor7}
                 alt="Setor 7 Logo"
-                className="w-48 h-48 object-contain rounded-lg"
+                className="w-20 h-20 rounded-full logo-glow animate-pulse"
               />
               <div className="text-center space-y-4">
                 <p className="text-2xl font-bold">
