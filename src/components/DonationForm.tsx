@@ -384,7 +384,7 @@ const DonationForm = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="discountCoupon">Cupom de Desconto</Label>
+            <Label htmlFor="discountCoupon">Cupom</Label>
             <Input
               id="discountCoupon"
               name="discountCoupon"
