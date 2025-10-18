@@ -17,7 +17,7 @@ const DonationForm = () => {
     amount: "",
     discountCoupon: "",
   });
-  const [showQrCode, setShowQrCode] = useState(false);
+  const [showQrCode, setShowQrCode] = useState(true);
   const [pixData, setPixData] = useState<{
     qr_code: string;
     qr_code_base64: string;
@@ -25,7 +25,7 @@ const DonationForm = () => {
     donation_id?: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [paymentApproved, setPaymentApproved] = useState(false);
+  const [paymentApproved, setPaymentApproved] = useState(true);
   const [couponError, setCouponError] = useState<string>("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
 
