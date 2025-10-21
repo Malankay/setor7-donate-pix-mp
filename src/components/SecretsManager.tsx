@@ -21,7 +21,10 @@ export const SecretsManager = () => {
   const [loading, setLoading] = useState(true);
   const [editingSecret, setEditingSecret] = useState<Secret | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newValue, setNewValue] = useState("");
+  const [newKey, setNewKey] = useState("");
+  const [newDescription, setNewDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [visibleSecrets, setVisibleSecrets] = useState<Set<string>>(new Set());
   const { toast } = useToast();
@@ -86,6 +89,49 @@ export const SecretsManager = () => {
     }
   };
 
+  const handleCreate = async () => {
+    if (!newKey.trim() || !newValue.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Chave e valor são obrigatórios.",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('app_secrets')
+        .insert({
+          key: newKey.trim(),
+          value: newValue.trim(),
+          description: newDescription.trim() || null,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Secret criado",
+        description: `${newKey} foi criado com sucesso.`,
+      });
+
+      setShowCreateDialog(false);
+      setNewKey("");
+      setNewValue("");
+      setNewDescription("");
+      fetchSecrets();
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao criar secret",
+        description: error.message,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const toggleVisibility = (secretId: string) => {
     setVisibleSecrets(prev => {
       const newSet = new Set(prev);
@@ -120,8 +166,15 @@ export const SecretsManager = () => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Gerenciar Secrets</CardTitle>
-          <CardDescription>Configure as chaves de API e tokens do sistema</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Gerenciar Secrets</CardTitle>
+              <CardDescription>Configure as chaves de API e tokens do sistema</CardDescription>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              Adicionar Secret
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
@@ -205,6 +258,67 @@ export const SecretsManager = () => {
               <Button onClick={handleSave} disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Salvar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Novo Secret</DialogTitle>
+            <DialogDescription>
+              Adicione uma nova chave de API ou token ao sistema
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="newKey">Chave</Label>
+              <Input
+                id="newKey"
+                type="text"
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                placeholder="Ex: STRIPE_API_KEY"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newValue">Valor</Label>
+              <Input
+                id="newValue"
+                type="text"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder="Digite o valor do secret"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="newDescription">Descrição (opcional)</Label>
+              <Input
+                id="newDescription"
+                type="text"
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                placeholder="Descreva para que serve este secret"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreateDialog(false);
+                  setNewKey("");
+                  setNewValue("");
+                  setNewDescription("");
+                }}
+                disabled={saving}
+              >
+                Cancelar
+              </Button>
+              <Button onClick={handleCreate} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Criar
               </Button>
             </div>
           </div>
