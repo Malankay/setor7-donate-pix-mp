@@ -31,6 +31,14 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Verificar se as variáveis de ambiente estão configuradas
+      console.log("VITE_SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL);
+      console.log("VITE_SUPABASE_PUBLISHABLE_KEY existe:", !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+      
+      if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY) {
+        throw new Error("Variáveis de ambiente do Supabase não configuradas");
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -62,8 +70,8 @@ const Auth = () => {
       }
       
       // Verificar se é erro de rede
-      if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
-        errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+      if (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch'))) {
+        errorMessage = "Erro de conexão com o servidor. Verifique se o Lovable Cloud está ativo.";
       }
       
       toast({
