@@ -31,18 +31,44 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro de autenticação:", error);
+        throw error;
+      }
 
-      navigate("/painel");
+      if (data.session) {
+        toast({
+          title: "Login realizado com sucesso",
+          description: "Redirecionando...",
+        });
+        navigate("/painel");
+      }
     } catch (error: any) {
+      console.error("Erro completo:", error);
+      
+      let errorMessage = "Erro desconhecido ao fazer login";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.error_description) {
+        errorMessage = error.error_description;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      // Verificar se é erro de rede
+      if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+        errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+      }
+      
       toast({
         title: "Erro ao fazer login",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
