@@ -79,6 +79,27 @@ const DonationForm = () => {
     setCouponError("");
 
     try {
+      // Buscar valor mínimo para cupom
+      const { data: secretData } = await supabase
+        .from("app_secrets")
+        .select("value")
+        .eq("key", "VALOR_MINIMO_CUPOM")
+        .maybeSingle();
+
+      const valorMinimoCupom = secretData?.value ? parseFloat(secretData.value) : 0;
+
+      // Verificar se o valor da doação atende ao mínimo
+      const amountValue = parseFloat(formData.amount.replace(/\./g, "").replace(",", "."));
+      if (valorMinimoCupom > 0 && amountValue < valorMinimoCupom) {
+        const valorMinimoFormatado = valorMinimoCupom.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        setCouponError(`Valor mínimo para usar cupom: R$ ${valorMinimoFormatado}`);
+        setIsValidatingCoupon(false);
+        return false;
+      }
+
       const { data: coupon, error } = await supabase
         .from("streamer_coupons")
         .select("*")
