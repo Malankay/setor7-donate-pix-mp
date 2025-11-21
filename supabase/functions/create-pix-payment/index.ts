@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { name, email, phone, steamId, amount, description, discountCoupon } = await req.json();
+    const { name, email, phone, steamId, amount, description, discountCoupon, packageType } = await req.json();
 
-    console.log('Creating PIX payment:', { name, email, phone, steamId, amount, discountCoupon });
+    console.log('Creating PIX payment:', { name, email, phone, steamId, amount, discountCoupon, packageType });
 
     // Get Mercado Pago token from database
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -102,8 +102,8 @@ serve(async (req) => {
         items: [
           {
             id: 'donation',
-            title: description || 'Doação Setor 7 Hardcore PVE',
-            description: `Doação de ${name} - Steam ID: ${steamId}`,
+            title: packageType || 'Moedas',
+            description: description || `Doação de ${name} - Steam ID: ${steamId}`,
             quantity: 1,
             unit_price: parseFloat(amount),
           },
@@ -169,6 +169,7 @@ serve(async (req) => {
           qr_code_base64: pixData.qr_code_base64,
           ticket_url: pixData.ticket_url,
           discount_coupon: discountCoupon || null,
+          package_type: packageType || 'Moedas',
         });
 
       if (dbError) {

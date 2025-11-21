@@ -70,6 +70,14 @@ const DonationForm = () => {
     }
   };
 
+  const getPackageName = () => {
+    if (selectedPackage === "moedas") {
+      return "Moedas";
+    }
+    const selectedVip = vipPackages.find((vip) => vip.id === selectedPackage);
+    return selectedVip?.nome || "Moedas";
+  };
+
   const formatCurrency = (value: string) => {
     // Remove tudo exceto números
     const numbers = value.replace(/\D/g, "");
@@ -216,6 +224,7 @@ const DonationForm = () => {
 
     try {
       const amountValue = formData.amount.replace(/\./g, "").replace(",", ".");
+      const packageName = getPackageName();
 
       const { data, error } = await supabase.functions.invoke('create-pix-payment', {
         body: {
@@ -224,8 +233,9 @@ const DonationForm = () => {
           phone: formData.phone,
           steamId: formData.steamId,
           amount: amountValue,
-          description: `Doação Setor 7 - ${formData.name} (${formData.steamId})`,
+          description: `Doação Setor 7 - ${packageName} - ${formData.name} (${formData.steamId})`,
           discountCoupon: formData.discountCoupon,
+          packageType: packageName,
         },
       });
 
