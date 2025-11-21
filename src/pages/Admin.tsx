@@ -192,15 +192,6 @@ const Admin = () => {
     }
   }, [user]);
 
-  // Auto-update donation statuses every 2 minutes (only when donations tab is active)
-  useEffect(() => {
-    if (!user || activeTab !== "donations") return;
-    const interval = setInterval(() => {
-      handleUpdateAllStatuses();
-    }, 120000); // 2 minutes in milliseconds
-
-    return () => clearInterval(interval);
-  }, [user, donations, activeTab]);
   const fetchAllServidorMods = async () => {
     try {
       const {
