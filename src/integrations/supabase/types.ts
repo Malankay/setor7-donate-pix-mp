@@ -368,6 +368,33 @@ export type Database = {
         }
         Relationships: []
       }
+      vip_packages: {
+        Row: {
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

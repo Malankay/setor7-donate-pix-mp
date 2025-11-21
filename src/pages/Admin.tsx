@@ -17,6 +17,7 @@ import { SecretsManager } from "@/components/SecretsManager";
 import { StreamerForm } from "@/components/StreamerForm";
 import { StreamerCouponForm } from "@/components/StreamerCouponForm";
 import { StreamerCampaignForm } from "@/components/StreamerCampaignForm";
+import { VipForm } from "@/components/VipForm";
 interface Donation {
   id: string;
   payment_id: string;
@@ -89,6 +90,14 @@ interface StreamerCampaign {
   valor: number;
   created_at: string;
 }
+
+interface VipPackage {
+  id: string;
+  nome: string;
+  descricao: string | null;
+  valor: number;
+  created_at: string;
+}
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -130,6 +139,12 @@ const Admin = () => {
   const [streamersLoaded, setStreamersLoaded] = useState(false);
   const [selectedStreamerForCampaigns, setSelectedStreamerForCampaigns] = useState<string | null>(null);
   const [streamerCampaigns, setStreamerCampaigns] = useState<StreamerCampaign[]>([]);
+  const [vipPackages, setVipPackages] = useState<VipPackage[]>([]);
+  const [editingVip, setEditingVip] = useState<VipPackage | null>(null);
+  const [showAddVipDialog, setShowAddVipDialog] = useState(false);
+  const [showEditVipDialog, setShowEditVipDialog] = useState(false);
+  const [vipToDelete, setVipToDelete] = useState<string | null>(null);
+  const [vipsLoaded, setVipsLoaded] = useState(false);
   const [showAddCampaignDialog, setShowAddCampaignDialog] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<StreamerCampaign | null>(null);
   const [showEditCampaignDialog, setShowEditCampaignDialog] = useState(false);
@@ -317,6 +332,49 @@ const Admin = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar streamers",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchVipPackages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("vip_packages")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      setVipPackages(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar pacotes VIP",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteVip = async (vipId: string) => {
+    try {
+      const { error } = await supabase
+        .from("vip_packages")
+        .delete()
+        .eq("id", vipId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Pacote VIP deletado",
+        description: "O pacote VIP foi removido com sucesso.",
+      });
+      
+      setVipToDelete(null);
+      fetchVipPackages();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar pacote VIP",
         description: error.message,
         variant: "destructive",
       });
@@ -682,6 +740,10 @@ const Admin = () => {
                     fetchStreamers();
                     setStreamersLoaded(true);
                   }
+                  if (value === "vips" && !vipsLoaded) {
+                    fetchVipPackages();
+                    setVipsLoaded(true);
+                  }
                 }}
               >
                 <CardHeader>
@@ -690,6 +752,7 @@ const Admin = () => {
                     <TabsTrigger value="users">Usuários</TabsTrigger>
                     <TabsTrigger value="servers">Servidores</TabsTrigger>
                     <TabsTrigger value="streamers">Streamers</TabsTrigger>
+                    <TabsTrigger value="vips">VIPs</TabsTrigger>
                     <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
                     <TabsTrigger value="secrets">Secrets</TabsTrigger>
                   </TabsList>
@@ -1233,6 +1296,80 @@ const Admin = () => {
                     </div>
                   </CardContent>
                 </TabsContent>
+
+                <TabsContent value="vips">
+                  <CardHeader>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <CardTitle className="text-2xl">Pacotes VIP</CardTitle>
+                        <CardDescription>
+                          Total de {vipPackages.length} pacote(s) VIP cadastrado(s)
+                        </CardDescription>
+                      </div>
+                      <Button onClick={() => setShowAddVipDialog(true)} className="gap-2">
+                        <Plus className="h-4 w-4" />
+                        Adicionar VIP
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {vipPackages.length > 0 ? (
+                      <div className="rounded-md border border-border/50">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Nome</TableHead>
+                              <TableHead>Descrição</TableHead>
+                              <TableHead>Valor</TableHead>
+                              <TableHead>Data de Criação</TableHead>
+                              <TableHead className="text-right">Ações</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {vipPackages.map((vip) => (
+                              <TableRow key={vip.id}>
+                                <TableCell className="font-medium">{vip.nome}</TableCell>
+                                <TableCell className="text-sm text-muted-foreground max-w-md truncate">
+                                  {vip.descricao || "-"}
+                                </TableCell>
+                                <TableCell className="font-semibold text-accent">
+                                  {formatCurrency(vip.valor)}
+                                </TableCell>
+                                <TableCell>{formatDate(vip.created_at)}</TableCell>
+                                <TableCell className="text-right">
+                                  <div className="flex gap-2 justify-end">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingVip(vip);
+                                        setShowEditVipDialog(true);
+                                      }}
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setVipToDelete(vip.id)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <p>Nenhum pacote VIP cadastrado ainda.</p>
+                        <p className="text-sm mt-2">Clique em "Adicionar VIP" para começar.</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </TabsContent>
               </Tabs>
             </Card>
           </div>
@@ -1704,6 +1841,109 @@ const Admin = () => {
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => streamerToDelete && handleDeleteStreamer(streamerToDelete)}
+                className="bg-red-900 hover:bg-red-800 text-white"
+              >
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Add VIP Dialog */}
+        <Dialog open={showAddVipDialog} onOpenChange={setShowAddVipDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Adicionar Pacote VIP</DialogTitle>
+              <DialogDescription>
+                Cadastre um novo pacote VIP no sistema
+              </DialogDescription>
+            </DialogHeader>
+            <VipForm 
+              onSubmit={async (data) => {
+                try {
+                  const { error } = await supabase
+                    .from("vip_packages")
+                    .insert([data]);
+                  
+                  if (error) throw error;
+                  
+                  toast({
+                    title: "Sucesso",
+                    description: "Pacote VIP cadastrado com sucesso!",
+                  });
+                  fetchVipPackages();
+                  setShowAddVipDialog(false);
+                } catch (error: any) {
+                  toast({
+                    title: "Erro ao cadastrar pacote VIP",
+                    description: error.message,
+                    variant: "destructive",
+                  });
+                }
+              }}
+              onCancel={() => setShowAddVipDialog(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit VIP Dialog */}
+        <Dialog open={showEditVipDialog} onOpenChange={setShowEditVipDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto backdrop-blur-sm bg-card/95">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Editar Pacote VIP</DialogTitle>
+              <DialogDescription>
+                Atualize as informações do pacote VIP
+              </DialogDescription>
+            </DialogHeader>
+            <VipForm 
+              vip={editingVip || undefined}
+              onSubmit={async (data) => {
+                try {
+                  if (!editingVip) return;
+                  
+                  const { error } = await supabase
+                    .from("vip_packages")
+                    .update(data)
+                    .eq("id", editingVip.id);
+                  
+                  if (error) throw error;
+                  
+                  toast({
+                    title: "Sucesso",
+                    description: "Pacote VIP atualizado com sucesso!",
+                  });
+                  fetchVipPackages();
+                  setShowEditVipDialog(false);
+                  setEditingVip(null);
+                } catch (error: any) {
+                  toast({
+                    title: "Erro ao atualizar pacote VIP",
+                    description: error.message,
+                    variant: "destructive",
+                  });
+                }
+              }}
+              onCancel={() => {
+                setShowEditVipDialog(false);
+                setEditingVip(null);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete VIP Alert Dialog */}
+        <AlertDialog open={!!vipToDelete} onOpenChange={() => setVipToDelete(null)}>
+          <AlertDialogContent className="backdrop-blur-sm bg-card/95">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir este pacote VIP? Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => vipToDelete && handleDeleteVip(vipToDelete)}
                 className="bg-red-900 hover:bg-red-800 text-white"
               >
                 Excluir
