@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { QrCode, Skull } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,6 +29,45 @@ const DonationForm = () => {
   const [paymentApproved, setPaymentApproved] = useState(false);
   const [couponError, setCouponError] = useState<string>("");
   const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+  const [vipPackages, setVipPackages] = useState<Array<{ id: string; nome: string; valor: number }>>([]);
+  const [selectedPackage, setSelectedPackage] = useState<string>("moedas");
+
+  useEffect(() => {
+    const fetchVipPackages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("vip_packages")
+          .select("id, nome, valor")
+          .order("valor", { ascending: true });
+        
+        if (error) throw error;
+        setVipPackages(data || []);
+      } catch (error: any) {
+        console.error("Erro ao carregar pacotes VIP:", error.message);
+      }
+    };
+
+    fetchVipPackages();
+  }, []);
+
+  const handlePackageChange = (value: string) => {
+    setSelectedPackage(value);
+    
+    if (value === "moedas") {
+      // Limpar o valor quando "Moedas" for selecionado
+      setFormData((prev) => ({ ...prev, amount: "" }));
+    } else {
+      // Preencher com o valor do pacote VIP selecionado
+      const selectedVip = vipPackages.find((vip) => vip.id === value);
+      if (selectedVip) {
+        const formattedValue = selectedVip.valor.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        setFormData((prev) => ({ ...prev, amount: formattedValue }));
+      }
+    }
+  };
 
   const formatCurrency = (value: string) => {
     // Remove tudo exceto números
@@ -392,6 +432,26 @@ const DonationForm = () => {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="package">Tipo de Pacote *</Label>
+            <Select value={selectedPackage} onValueChange={handlePackageChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um pacote" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="moedas">Moedas</SelectItem>
+                {vipPackages.map((vip) => (
+                  <SelectItem key={vip.id} value={vip.id}>
+                    {vip.nome} - R$ {vip.valor.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="amount">Valor da Doação (R$) *</Label>
             <Input
               id="amount"
@@ -401,6 +461,7 @@ const DonationForm = () => {
               onChange={handleChange}
               placeholder="0,00"
               required
+              disabled={selectedPackage !== "moedas"}
             />
           </div>
 
