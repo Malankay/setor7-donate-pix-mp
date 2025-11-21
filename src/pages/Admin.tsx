@@ -747,15 +747,19 @@ const Admin = () => {
                 }}
               >
                 <CardHeader>
-                  <TabsList className="grid w-full grid-cols-6">
-                    <TabsTrigger value="donations">Doações</TabsTrigger>
-                    <TabsTrigger value="users">Usuários</TabsTrigger>
-                    <TabsTrigger value="servers">Servidores</TabsTrigger>
-                    <TabsTrigger value="streamers">Streamers</TabsTrigger>
-                    <TabsTrigger value="vips">VIPs</TabsTrigger>
-                    <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-                    <TabsTrigger value="secrets">Secrets</TabsTrigger>
-                  </TabsList>
+                  <div className="space-y-2">
+                    <TabsList className="grid w-full grid-cols-4 bg-card/50 backdrop-blur-sm">
+                      <TabsTrigger value="donations">Doações</TabsTrigger>
+                      <TabsTrigger value="users">Usuários</TabsTrigger>
+                      <TabsTrigger value="servers">Servidores</TabsTrigger>
+                      <TabsTrigger value="streamers">Streamers</TabsTrigger>
+                    </TabsList>
+                    <TabsList className="grid w-full grid-cols-3 bg-card/50 backdrop-blur-sm">
+                      <TabsTrigger value="vips">VIPs</TabsTrigger>
+                      <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+                      <TabsTrigger value="secrets">Secrets</TabsTrigger>
+                    </TabsList>
+                  </div>
                 </CardHeader>
 
                 <TabsContent value="donations">
