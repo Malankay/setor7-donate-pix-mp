@@ -97,6 +97,7 @@ interface VipPackage {
   descricao: string | null;
   valor: number;
   created_at: string;
+  active: boolean;
 }
 const Admin = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -350,6 +351,30 @@ const Admin = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar pacotes VIP",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleToggleVipStatus = async (vipId: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from("vip_packages")
+        .update({ active: !currentStatus })
+        .eq("id", vipId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Status atualizado",
+        description: `Pacote VIP ${!currentStatus ? "ativado" : "desativado"} com sucesso.`,
+      });
+      
+      fetchVipPackages();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar status",
         description: error.message,
         variant: "destructive",
       });
@@ -1325,6 +1350,7 @@ const Admin = () => {
                               <TableHead>Nome</TableHead>
                               <TableHead>Descrição</TableHead>
                               <TableHead>Valor</TableHead>
+                              <TableHead>Status</TableHead>
                               <TableHead>Data de Criação</TableHead>
                               <TableHead className="text-right">Ações</TableHead>
                             </TableRow>
@@ -1338,6 +1364,18 @@ const Admin = () => {
                                 </TableCell>
                                 <TableCell className="font-semibold text-accent">
                                   {formatCurrency(vip.valor)}
+                                </TableCell>
+                                <TableCell>
+                                  <button
+                                    onClick={() => handleToggleVipStatus(vip.id, vip.active)}
+                                    className={`px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors ${
+                                      vip.active
+                                        ? "bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                                        : "bg-gray-500/20 text-gray-400 hover:bg-gray-500/30"
+                                    }`}
+                                  >
+                                    {vip.active ? "Ativo" : "Inativo"}
+                                  </button>
                                 </TableCell>
                                 <TableCell>{formatDate(vip.created_at)}</TableCell>
                                 <TableCell className="text-right">
