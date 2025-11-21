@@ -32,6 +32,7 @@ interface Donation {
   qr_code: string | null;
   qr_code_base64: string | null;
   ticket_url: string | null;
+  package_type: string | null;
 }
 interface UserProfile {
   id: string;
@@ -811,7 +812,7 @@ const Admin = () => {
                           <TableRow>
                             <TableHead>Data</TableHead>
                             <TableHead>Nome</TableHead>
-                            <TableHead>Email</TableHead>
+                            <TableHead>Tipo de Pacote</TableHead>
                             <TableHead>Valor</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Ações</TableHead>
@@ -819,13 +820,15 @@ const Admin = () => {
                         </TableHeader>
                         <TableBody>
                           {donations.length === 0 ? <TableRow>
-                              <TableCell colSpan={6} className="text-center text-muted-foreground">
+                              <TableCell colSpan={7} className="text-center text-muted-foreground">
                                 Nenhuma doação encontrada
                               </TableCell>
                             </TableRow> : donations.map(donation => <TableRow key={donation.id}>
                                 <TableCell>{formatDate(donation.created_at)}</TableCell>
                                 <TableCell className="font-medium">{donation.name}</TableCell>
-                                <TableCell>{donation.email}</TableCell>
+                                <TableCell className="text-sm text-muted-foreground">
+                                  {donation.package_type || "Moedas"}
+                                </TableCell>
                                 <TableCell className="text-accent font-semibold">{formatCurrency(donation.amount)}</TableCell>
                                 <TableCell>
                                   <button onClick={() => handleStatusClick(donation.payment_id, donation.id)} className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium transition-colors cursor-pointer ${getStatusColor(donation.status)}`}>

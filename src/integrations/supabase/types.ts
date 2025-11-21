@@ -77,6 +77,7 @@ export type Database = {
           email: string
           id: string
           name: string
+          package_type: string | null
           payment_id: string
           phone: string | null
           qr_code: string | null
@@ -94,6 +95,7 @@ export type Database = {
           email: string
           id?: string
           name: string
+          package_type?: string | null
           payment_id: string
           phone?: string | null
           qr_code?: string | null
@@ -111,6 +113,7 @@ export type Database = {
           email?: string
           id?: string
           name?: string
+          package_type?: string | null
           payment_id?: string
           phone?: string | null
           qr_code?: string | null
