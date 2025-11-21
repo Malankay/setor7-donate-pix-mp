@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { NumericFormat } from "react-number-format";
 
 interface VipFormProps {
   vip?: {
@@ -57,12 +58,17 @@ export function VipForm({ vip, onSubmit, onCancel }: VipFormProps) {
 
       <div>
         <Label htmlFor="valor">Valor (R$)</Label>
-        <Input
+        <NumericFormat
           id="valor"
-          type="number"
-          step="0.01"
           value={valor}
-          onChange={(e) => setValor(e.target.value)}
+          onValueChange={(values) => setValor(values.value)}
+          thousandSeparator="."
+          decimalSeparator=","
+          prefix="R$ "
+          decimalScale={2}
+          fixedDecimalScale
+          allowNegative={false}
+          customInput={Input}
           required
         />
       </div>
