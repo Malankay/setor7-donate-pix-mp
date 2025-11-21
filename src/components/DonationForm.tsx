@@ -38,6 +38,7 @@ const DonationForm = () => {
         const { data, error } = await supabase
           .from("vip_packages")
           .select("id, nome, valor")
+          .eq("active", true)
           .order("valor", { ascending: true });
         
         if (error) throw error;

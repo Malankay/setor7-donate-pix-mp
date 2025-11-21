@@ -370,6 +370,7 @@ export type Database = {
       }
       vip_packages: {
         Row: {
+          active: boolean
           created_at: string
           descricao: string | null
           id: string
@@ -378,6 +379,7 @@ export type Database = {
           valor: number
         }
         Insert: {
+          active?: boolean
           created_at?: string
           descricao?: string | null
           id?: string
@@ -386,6 +388,7 @@ export type Database = {
           valor: number
         }
         Update: {
+          active?: boolean
           created_at?: string
           descricao?: string | null
           id?: string
