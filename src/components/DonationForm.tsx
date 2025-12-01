@@ -111,6 +111,10 @@ const DonationForm = () => {
     } else if (name === "phone") {
       const formatted = formatPhone(value);
       setFormData((prev) => ({ ...prev, [name]: formatted }));
+    } else if (name === "steamId") {
+      // Aceita apenas números
+      const numbersOnly = value.replace(/\D/g, "");
+      setFormData((prev) => ({ ...prev, [name]: numbersOnly }));
     } else if (name === "discountCoupon") {
       setFormData((prev) => ({ ...prev, [name]: value }));
       setCouponError("");
@@ -193,6 +197,11 @@ const DonationForm = () => {
 
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       toast.error("E-mail inválido!");
+      return false;
+    }
+
+    if (formData.steamId.length !== 17) {
+      toast.error("SteamID deve conter exatamente 17 números!");
       return false;
     }
 
@@ -437,9 +446,13 @@ const DonationForm = () => {
               type="text"
               value={formData.steamId}
               onChange={handleChange}
-              placeholder="STEAM_0:0:123456"
+              placeholder="12345678901234567"
+              maxLength={17}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Apenas números, 17 caracteres
+            </p>
           </div>
 
           <div className="space-y-2">
